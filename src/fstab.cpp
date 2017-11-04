@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
         const char* s = input;
         input += strspn(input, " \t\n");
         lineno += std::count(s, input, '\n');
-        if ('#' == *input)
+        if ('#' == *input || '\0' == *input)
             continue;
         v.resize(v.size() + 1);
         fsent& m = v.back();
