@@ -1,16 +1,21 @@
 #ifndef TEST_INCLUDE_GUARD
 #define TEST_INCLUDE_GUARD
 
-// This header is a test tool. This tool provides the following facilities.
+// This header is a test tool. This header provides the following facilities.
+//
 // ASSERT is an variadic macro that prints an error message to stderr and
 // increments the value of global variable status if the first argument is
 // false. The error message contains the filename and the line number of the
 // failed macro invocation followed by the failed expression, followed by the
 // names and values of the arguments of ASSERT starting from the second
 // argument.
+//
 // status is a global variable that captures the number of times ASSERT failed.
+// status can reach the max value of 64.
+//
 // PRINT is a variadic macro that prints the name and value of its arguments
 // starting from the second.
+//
 // This header is supposed to be copied to your project and included in a test
 // program.
 //
@@ -45,7 +50,8 @@
                                                         HEADLESS(__VA_ARGS__))
 
 static int status = 0;
-// We don't want to exit with exit code greater than 64.
+// We don't want status to be greater than 64, because status can be used as
+// the exit code.
 #define ASSERT(...)\
 do {\
     if (!(HEAD(__VA_ARGS__))) {\
@@ -60,3 +66,33 @@ do {\
 } while (0)
 
 #endif
+
+/*
+Copyright (c) 2017, Dmitry Goncharov
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
+
+Redistributions in binary form must reproduce the above copyright notice, this
+list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+Neither the names of the copyright holders nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
