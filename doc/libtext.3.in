@@ -1,11 +1,9 @@
 .TH "libtext" "3" "17 May 2017"  "libtext 1.0.0" "User commands"
 
 .SH "NAME"
-.LP
 libtext \- text manipulation routines.
 
 .SH "SYNOPSIS"
-.LP
 .nf
 #include <libtext/libtext.h>
 
@@ -30,8 +28,6 @@ void strip(std::string* input, const char* reject);
 char* strip(char* input, const char* reject);
 
 .SH "DESCRIPTION"
-.LP
-.nf
 read reads a line from input, validates that the line is well formed and splits
 the line to a sequence of fields separated by the first character of sep. The
 arguments that follow sep are all output arguments.   The first field is
@@ -63,8 +59,8 @@ Passing any integer other than 0 as value of an output argument causes
 undefined behavior.
 The behaior is undefined unless strlen(sep) == 1.
 
-nextline finds the address of the first character immediately following the
-first the newline character in the input.
+nextline finds the address of the character immediately following the first
+newline character in the input.
 
 oneline builds a copy of a substring of the input from the beginning until the
 first newline character.
@@ -80,6 +76,10 @@ arguments then read returns the address of the character that terminates the
 line (a new line character or a null terminator).  If the line is malformed
 read returns 0.
 
+nextline returns the address of the character immediately following the first
+newline character in the input. If there is no newline character in the input
+then nextline returns the address of the null terminator.
+
 oneline returns a copy of a substring of the input from the beginning until the
 first newline character. If there is no newline character in input the one line
 return a copy of input.
@@ -87,29 +87,23 @@ return a copy of input.
 strip returns the address of the first such character of input that is not in
 reject.
 
-.nf
-
 .SH "EXAMPLE"
-.nf
 This program shows how to use libtext::read to populate an in memory data
 structure holding a copy of /etc/fstab contents.
+.nf
 
 @example@
-
+.fi
 .SH "AUTHORS"
-.LP
-.nf
 Dmitry Goncharov <dgoncharov@users.sf.net>
 
 .SH "COPYRIGHT"
-.LP
 Copyright (C) 2017 Dmitry Goncharov.
 .br
 Distributed under the BSD license.
 
 .SH "HOMEPAGE"
-.LP
-http://libtext.sf.net
+https://github.com/dgoncharov/libtext
 
 .SH "SEE ALSO"
 .BR read (1)
