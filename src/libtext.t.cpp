@@ -118,6 +118,7 @@ static void uint_underflow(int line)
     ASSERT(k == 2, k, b, line);
 }
 
+
 template <class T>
 static void float_overflow(int line)
 {
@@ -339,93 +340,26 @@ static void test_int(int line)
 }
 
 template <class T>
-static void trailing_ws(const char* sep, int line)
+static void trailing_sep(const char* input, int line)
 {
     T x, y;
+    x = y = T();
+    const char* s = libtext::read(input, ",", &x, &y);
+    ASSERT(!s, s, input, line);
+    ASSERT(tos(x) == "51", x, input, line);
+    ASSERT(tos(y) == "45", y, input, line);
+}
 
+template <class T>
+static void trailing_ws(const char* input, const char* sep, int line, char exp)
+{
+    T x, y;
     x = y = T();
-    const char* s;
-    s = libtext::read("51\t45\t", sep, &x, &y);
-    ASSERT(s, line);
-    ASSERT(!*s, s, line);
-    ASSERT(tos(x) == "51", x, line, sep);
-    ASSERT(tos(y) == "45", y, line, sep);
-
-    x = y = T();
-    s = libtext::read("51 45\t", sep, &x, &y);
-    ASSERT(s, line);
-    ASSERT(!*s, s, line);
-    ASSERT(tos(x) == "51", x, line);
-    ASSERT(tos(y) == "45", y, line);
-    x = y = T();
-    s = libtext::read("51\t45 ", sep, &x, &y);
-    ASSERT(s, line);
-    ASSERT(!*s, s, line);
-    ASSERT(tos(x) == "51", x, line);
-    ASSERT(tos(y) == "45", y, line);
-
-    x = y = T();
-    s = libtext::read("51 45 ", sep, &x, &y);
-    ASSERT(s, line);
-    ASSERT(!*s, s, line);
-    ASSERT(tos(x) == "51", x, line);
-    ASSERT(tos(y) == "45", y, line);
-
-    x = y = T();
-    s = libtext::read("51\t 45\t ", sep, &x, &y);
-    ASSERT(s, line);
-    ASSERT(!*s, s, line);
-    ASSERT(tos(x) == "51", x, line);
-    ASSERT(tos(y) == "45", y, line);
-
-    x = y = T();
-    s = libtext::read("51 \t 45 \t ", sep, &x, &y);
-    ASSERT(s, line);
-    ASSERT(!*s, s, line);
-    ASSERT(tos(x) == "51", x, line);
-    ASSERT(tos(y) == "45", y, line);
-
-    x = y = T();
-    s = libtext::read("51\t45\t\n", sep, &x, &y);
-    ASSERT(s, line);
-    ASSERT(*s == '\n', s, line);
-    ASSERT(tos(x) == "51", x, line);
-    ASSERT(tos(y) == "45", y, line);
-
-    x = y = T();
-    s = libtext::read("51 45\t\n", sep, &x, &y);
-    ASSERT(s, line);
-    ASSERT(*s == '\n', s, line);
-    ASSERT(tos(x) == "51", x, line);
-    ASSERT(tos(y) == "45", y, line);
-
-    x = y = T();
-    s = libtext::read("51\t45 \n", sep, &x, &y);
-    ASSERT(s, line);
-    ASSERT(*s == '\n', s, line);
-    ASSERT(tos(x) == "51", x, line);
-    ASSERT(tos(y) == "45", y, line);
-
-    x = y = T();
-    s = libtext::read("51 45 \n", sep, &x, &y);
-    ASSERT(s, line);
-    ASSERT(*s == '\n', s, line);
-    ASSERT(tos(x) == "51", x, line);
-    ASSERT(tos(y) == "45", y, line);
-
-    x = y = T();
-    s = libtext::read("51\t 45\t \n", sep, &x, &y);
-    ASSERT(s, line);
-    ASSERT(*s == '\n', s, line);
-    ASSERT(tos(x) == "51", x, line);
-    ASSERT(tos(y) == "45", y, line);
-
-    x = y = T();
-    s = libtext::read("51 \t 45 \t \n", sep, &x, &y);
-    ASSERT(s, line);
-    ASSERT(*s == '\n', s, line);
-    ASSERT(tos(x) == "51", x, line);
-    ASSERT(tos(y) == "45", y, line);
+    const char* s = libtext::read(input, sep, &x, &y);
+    ASSERT(s, input, sep, line);
+    ASSERT(*s == exp, s, input, sep, line);
+    ASSERT(tos(x) == "51", x, input, sep, line);
+    ASSERT(tos(y) == "45", y, input, sep, line);
 }
 
 template <class T>
@@ -468,6 +402,7 @@ static void test_parsing(int line)
     x = T();
     s = libtext::read("51,45", ",", &x);
     ASSERT(s);
+    ASSERT(!strcmp(s, "45"), s);
     ASSERT(tos(x) == "51", x);
 
     // Fewer parameters than there are fields.
@@ -482,19 +417,31 @@ static void test_parsing(int line)
     s = libtext::read("", ",", &x);
     ASSERT(!s, s, line);
 
-    // Extra args.
+    s = libtext::read("", ",", 0);
+    ASSERT(!s, s, line);
+
+    // No separator in input.
     s = libtext::read("51", ",", &x);
     ASSERT(s, line);
+    ASSERT(!*s, s, line);
+    ASSERT(tos(x) == "51", x, line);
 
+    // No separator in input and extra arg.
+    x = T();
     s = libtext::read("51", ",", &x, &y);
     ASSERT(!s, s, line);
+    ASSERT(tos(x) == "51", x, line);
 
+    x = T();
     s = libtext::read("51\n45", ",", &x, &y);
     ASSERT(!s, s, line);
+    ASSERT(tos(x) == "51", x, line);
 
     // Parsing still fails even when the user is not interested in the value.
+    x = T();
     s = libtext::read("51", ",", &x, 0);
     ASSERT(!s, s, line);
+    ASSERT(tos(x) == "51", x, line);
 
     s = libtext::read("51", ",", 0, &x);
     ASSERT(!s, s, line);
@@ -506,72 +453,19 @@ static void test_parsing(int line)
     s = libtext::read(",51,45", ",", &x, &y);
     ASSERT(!s, s, line);
 
+    x = T();
     s = libtext::read("51,,45", ",", &x, &y);
     ASSERT(!s, s, line);
+    ASSERT(tos(x) == "51", x, line);
 
     // Line ends with a separator.
-    s = libtext::read("51,45,", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45,\t ", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45, \t ", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45,\n", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45,\t \n", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45, \t \n", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45\t ,", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45 \t ,", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45,\t ", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45\t ,\t ", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45 \t ,\t ", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45\t , \t ", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45 \t , \t ", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45\t ,\n", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45 \t ,\n", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45,\t \n", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45\t ,\t \n", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45 \t ,\t \n", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45, \t \n", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45\t , \t \n", ",", &x, &y);
-    ASSERT(!s, s, line);
-
-    s = libtext::read("51,45 \t , \t \n", ",", &x, &y);
-    ASSERT(!s, s, line);
+    const char* input[] = {"51,45,", "51,45,\t ", "51,45, \t ", "51,45,\n",
+        "51,45,\t \n", "51,45, \t \n", "51,45\t ,", "51,45 \t ,", "51,45,\t ",
+        "51,45 \t ,\t ", "51,45\t , \t ", "51,45 \t , \t ", "51,45\t ,\n",
+        "51,45 \t ,\n", "51,45,\t \n", "51,45\t ,\t \n", "51,45 \t ,\t \n",
+        "51,45, \t \n", "51,45\t , \t \n", "51,45 \t , \t \n", 0};
+    for (const char** in = input; *in; ++in)
+        trailing_sep<T>(*in, line);
 
     // One parameter, 1 field, extra separator after the field.
     x = T();
@@ -585,18 +479,35 @@ static void test_parsing(int line)
     ASSERT(tos(x) == "51", x, line);
 
     // Line ends with a separator. tab and space is a separator.
-    trailing_ws<T>("\t", line);
-    trailing_ws<T>(" ", line);
+    const char* input2[] = { "51\t45\t", "51 45\t", "51\t45 ", "51 45 ",
+                                            "51\t 45\t ", "51 \t 45 \t ", 0};
+    for (const char** in = input2; *in; ++in) {
+        trailing_ws<T>(*in, "\t", line, '\0');
+        trailing_ws<T>(*in, " ", line, '\0');
+    }
+    const char* input3[] =
+        {"51\t45\t\n", "51 45\t\n", "51\t45 \n", "51 45 \n", "51\t 45\t \n",
+                                                        "51 \t 45 \t \n", 0};
+    for (const char** in = input3; *in; ++in) {
+        trailing_ws<T>(*in, "\t", line, '\n');
+        trailing_ws<T>(*in, " ", line, '\n');
+    }
 
     // \n at the end of the line is fine.
     s = libtext::read("51,45\n", ",", &x, &y);
     ASSERT(s, line);
+    ASSERT(tos(x) == "51", x, line);
+    ASSERT(tos(y) == "45", y, line);
 
     s = libtext::read("51,45\t \n", ",", &x, &y);
     ASSERT(s, line);
+    ASSERT(tos(x) == "51", x, line);
+    ASSERT(tos(y) == "45", y, line);
 
     s = libtext::read("51,45 \t \n", ",", &x, &y);
     ASSERT(s, line);
+    ASSERT(tos(x) == "51", x, line);
+    ASSERT(tos(y) == "45", y, line);
 
     // Incorrect separator.
     s = libtext::read("51,45", ":", &x, &y);
@@ -607,12 +518,24 @@ static void success(const std::string& input, const char* sep, const char* exp)
 {
     std::string h = "test failed";
     const char* s;
+    if (verbose)
+        std::cout
+            << __func__ << ": input = " << input
+            << ", sep = " << (sep ? sep : "null")
+            << ", exp = " << exp << ", reading a string"
+            << std::endl;
     s = libtext::read(input.c_str(), sep, &h);
     ASSERT(s);
     ASSERT(!*s || *s == '\n', int(*s));
     ASSERT(exp == h, input, exp, h);
     h = "test failed";
     int k = 1;
+    if (verbose)
+        std::cout
+            << __func__ << ": input = " << input
+            << ", sep = " << (sep ? sep : "null")
+            << ", exp = " << exp << ", reading a string and an int"
+            << std::endl;
     s = libtext::read(input.c_str(), sep, &h, &k);
     ASSERT(!s, s);
     ASSERT(exp == h, input, exp, h);
@@ -629,170 +552,128 @@ static void failure(const std::string& input, const char* sep, T exp)
     ASSERT(x == exp, tos(x));
 }
 
+// Replace all occurences of 'x' in 'input' with 'y'.
+// Return the number of replacements.
+static
+int replace(std::string* input, const std::string& x, const std::string& y)
+{
+    size_t pos = 0;
+    int n = 0;
+    for (; (pos = input->find(x, pos)) != input->npos; pos += y.size(), ++n)
+        input->replace(pos, x.size(), y);
+    return n;
+}
+
 int main(int argc, char* argv[])
 {
     const int test = argc > 1 ? atoi(argv[1]) : 0;
     verbose = argc > 2;
     std::cout << "test " << __FILE__ << " case " << test << std::endl;
 
+    std::string host = "test failed";
+    uint16_t port = 77;
     const char* s;
     switch (test) {
     case 0: {
-        // Simple well defined input.
-        std::string host = "test failed";
-        s = libtext::read("example.com:80", ":", &host);
-        ASSERT(s);
-        ASSERT(!strcmp(s, "80"));
-        ASSERT("example.com" == host, host);
-
-        host = "test failed";
-        s = libtext::read("example.com", ":", &host);
-        ASSERT(s);
-        ASSERT(!*s);
-        ASSERT("example.com" == host, host);
-
-        host = "test failed";
-        s = libtext::read("example.com\n", ":", &host);
-        ASSERT(s);
-        ASSERT(*s == '\n');
-        ASSERT("example.com" == host, host);
-
-        host = "test failed";
-        uint16_t port = 77;
-        s = libtext::read("example.com:80", ":", &host, &port);
-        ASSERT(s);
-        ASSERT(!*s);
-        ASSERT("example.com" == host, host);
-        ASSERT(port == 80, port);
-
-        // Empty input.
-        s = libtext::read("", ":", &host);
-        ASSERT(!s, s);
-        s = libtext::read("", ":", 0);
-        ASSERT(!s, s);
+        // Test nextline first, because subsequent tests use nextline.
+        const char* input = "hello\nworld";
+        s = libtext::nextline(input);
+        ASSERT(s == strchr(input, 'w'), s, input);
+        input = "hello world";
+        input = libtext::nextline(input);
+        ASSERT(!*input, input);
+        input = libtext::nextline("");
+        ASSERT(!*input, input);
         break;
     }
     case 1: {
-        // Multiple lines.
-        const char* input = "example.com:80\n192.168.1.1:8080";
-        std::string host = "test failed";
+        // Simple well defined input.
+        const char* input = "example.com";
+        host = "test failed";
+        s = libtext::read(input, ":", &host);
+        ASSERT(s);
+        ASSERT(!*s, s);
+        ASSERT(input == host, host);
+
+        input = "example.com\n";
+        host = "test failed";
+        s = libtext::read(input, ":", &host);
+        ASSERT(s);
+        ASSERT(*s == '\n', s);
+        ASSERT("example.com" == host, host);
+
+        input = "example.com:80";
+        host = "test failed";
+        s = libtext::read(input, ":", &host);
+        ASSERT(s);
+        ASSERT(s == strstr(input, "80"), s, input);
+        ASSERT("example.com" == host, host);
+
+        host = "test failed";
         uint16_t port = 77;
-        input = libtext::read(input, ":", &host, &port);
-        ASSERT(input);
-        ASSERT(*input);
+        s = libtext::read(input, ":", &host, &port);
+        ASSERT(s);
+        ASSERT(!*s, s);
         ASSERT("example.com" == host, host);
         ASSERT(port == 80, port);
-        input = libtext::nextline(input);
-        ASSERT(input);
-        ASSERT(*input);
-        input = libtext::read(input, ":", &host, &port);
-        ASSERT(input);
-        ASSERT(!*input);
-        ASSERT("192.168.1.1" == host, host);
-        ASSERT(port == 8080, port);
-        // Mix of integers and strings and floats.
         break;
     }
     case 2: {
-        // Leading and trailing spaces at the line ends.
-        const char* input = " \t example.com:80 \t \n \t 192.168.1.1:8080  \t";
-        std::string host = "test failed";
-        uint16_t port = 77;
-        input = libtext::read(input, ":", &host, &port);
-        ASSERT(input);
-        ASSERT(*input == '\n', input);
+        // Test replace.
+        // Empty input.
+        std::string input;
+        size_t n = replace(&input, ":", "~|~");
+        ASSERT(!n, n);
+
+        // Replacement is longer than the pattern.
+        input = "example.com:80";
+        n = replace(&input, ":", "~|~");
+        ASSERT(n == 1, n);
+        ASSERT(input == "example.com~|~80", input);
+
+        // Pattern is longer than replacement.
+        n = replace(&input, "~|~", ",");
+        ASSERT(n == 1, n);
+        ASSERT(input == "example.com,80", input);
+
+        // Multiple matches.
+        input = "example.com:80\nx.com:8080\n";
+        n = replace(&input, ":", ",");
+        ASSERT(n == 2, n);
+        ASSERT(input == "example.com,80\nx.com,8080\n", input);
+
+        // Empty replacement.
+        n = replace(&input, ",", "");
+        ASSERT(n == 2, n);
+        ASSERT(input == "example.com80\nx.com8080\n", input);
+        break;
+    }
+    case 3: {
+        break;
+    }
+    case 4: {
+        // Multiple lines.
+        const char* input = "example.com:80\n192.168.1.1:8080";
+        host = "test failed";
+        port = 77;
+        s = libtext::read(input, ":", &host, &port);
+        ASSERT(s);
+        ASSERT(s == strchr(input, '\n'), s, input);
         ASSERT("example.com" == host, host);
         ASSERT(port == 80, port);
-        input = libtext::nextline(input);
-        ASSERT(input);
-        ASSERT(*input, input);
-std::cout << "test input = " << input << std::endl;
-        input = libtext::read(input, ":", &host, &port);
-        ASSERT(input);
-        ASSERT(!*input, *input);
+        s = libtext::nextline(s);
+        ASSERT(s);
+        ASSERT(s == strstr(input, "192"), s, input);
+        s = libtext::read(s, ":", &host, &port);
+        ASSERT(s);
+        ASSERT(!*s, s);
         ASSERT("192.168.1.1" == host, host);
         ASSERT(port == 8080, port);
-
-        // Leading and trailing spaces around separators.
-        input =
-            " \t example.com  \t : \t  80 \t \n \t 192.168.1.1  :\t  8080  \t";
-        host = "test failed";
-        port = 77;
-        input = libtext::read(input, ":", &host, &port);
-        ASSERT(input);
-        ASSERT(*input == '\n', input);
-        ASSERT("example.com" == host, host);
-        ASSERT(port == 80, port);
-        input = libtext::nextline(input);
-        ASSERT(input);
-        ASSERT(*input, input);
-std::cout << "test input = " << input << std::endl;
-        input = libtext::read(input, ":", &host, &port);
-        ASSERT(input);
-        ASSERT(!*input, *input);
-        ASSERT("192.168.1.1" == host, host);
-        ASSERT(port == 8080, port);
-
-        // Leading and trailing spaces around separators.
-        // tab is a separator.
-        input =
-            " \t example.com  \t   \t  80 \t \n \t 192.168.1.1   \t  8080  \t";
-        host = "test failed";
-        port = 77;
-        input = libtext::read(input, "\t", &host, &port);
-        ASSERT(input);
-        ASSERT(*input == '\n', input);
-        ASSERT("example.com" == host, host);
-        ASSERT(port == 80, port);
-        input = libtext::nextline(input);
-        ASSERT(input);
-        ASSERT(*input == ' ', input);
-std::cout << "test input = " << input << std::endl;
-        input = libtext::read(input, "\t", &host, &port);
-        ASSERT(input);
-        ASSERT(!*input, *input);
-        ASSERT("192.168.1.1" == host, host);
-        ASSERT(port == 8080, port);
-
-        // Leading and trailing spaces around separators. One character fields.
-        input = " \t e  \t : \t  8 \t \n \t 1  :\t  8  \t";
-        host = "test failed";
-        port = 77;
-        input = libtext::read(input, ":", &host, &port);
-        ASSERT(input);
-        ASSERT(*input == '\n', input);
-        ASSERT("e" == host, host);
-        ASSERT(port == 8, port);
-        input = libtext::nextline(input);
-        ASSERT(input);
-        ASSERT(*input, input);
-std::cout << "test input = " << input << std::endl;
-        input = libtext::read(input, ":", &host, &port);
-        ASSERT(input);
-        ASSERT(!*input, *input);
-        ASSERT("1" == host, host);
-        ASSERT(port == 8, port);
-
-        // Leading and trailing spaces around separators. One character fields.
-        // Separator is a space.
-        input = " \t e  \t   \t  8 \t \n \t 1   \t  8  \t";
-        host = "test failed";
-        port = 77;
-        input = libtext::read(input, " ", &host, &port);
-        ASSERT(input);
-        ASSERT(*input == '\n', input);
-        ASSERT("e" == host, host);
-        ASSERT(port == 8, port);
-        input = libtext::nextline(input);
-        ASSERT(input);
-        ASSERT(*input, input);
-std::cout << "test input = " << input << std::endl;
-        input = libtext::read(input, " ", &host, &port);
-        ASSERT(input);
-        ASSERT(!*input, *input);
-        ASSERT("1" == host, host);
-        ASSERT(port == 8, port);
-
+        break;
+    }
+    case 5: {
+        // Mix of string, int and float types.
+        const char* input = "-7:k2:2:-76:3:6:88:-88:7:4.5:7.1:8.4";
         int8_t i8 = 1;
         uint8_t u8 = 1;
         int16_t i16 = 1;
@@ -804,12 +685,13 @@ std::cout << "test input = " << input << std::endl;
         float f = 1.0;
         double d = 1.0;
         long double ld = 1.0;
-        input = "\t -7 \t \t2 -76 \t 3 \t 6 88 -88 7\t 4.5 \t  7.1 \t8.4 \t\t";
-        input = libtext::read(input, " ", &i8, &u8, &i16, &u16, &i32, &u32,
+        host = "test failed";
+        s = libtext::read(input, ":", &i8, &host, &u8, &i16, &u16, &i32, &u32,
                                                     &i64, &u64, &f, &d, &ld);
-        ASSERT(input);
-        ASSERT(!*input, *input);
+        ASSERT(s);
+        ASSERT(!*s, *s);
         ASSERT(i8 == -7, i8);
+        ASSERT(host == "k2", host);
         ASSERT(u8 == 2, u8);
         ASSERT(i16 == -76, i16);
         ASSERT(u16 == 3, u16);
@@ -822,7 +704,70 @@ std::cout << "test input = " << input << std::endl;
         ASSERT(ld == 8.4l, ld);
         break;
     }
-    case 3:
+    case 6: {
+        // Various separators.
+        // Spaces and tabs around separators and at line ends.
+        const char* seps[] =
+            {"^:^", "^~|~^", "^ ^", "^\t^", 0};
+        // The caret in the sep from seps is replaced with ones from caret.
+        const char* caret[] =
+            {"", " ", "\t", "  ", "\t\t", " \t", "  \t\t  ", "\t\t  \t\t", 0};
+        for (const char** separ = seps; *separ; ++separ) {
+            for (const char** car = caret; *car; ++car) {
+                std::string sep = *separ;
+                std::string input =
+                    "^-7:k2:2:-76:3:6:88:-88:7:4.5:7.1:8.4^\n^x.com:80^\n";
+                replace(&input, ":", sep);
+                replace(&sep, "^", "");
+                replace(&input, "^", *car);
+                if (verbose)
+                    std::cout
+                        << "input = \"" << input
+                        << "\", sep = \"" << sep << "\""
+                        << std::endl;
+                int8_t i8 = 1;
+                uint8_t u8 = 1;
+                int16_t i16 = 1;
+                uint16_t u16 = 1;
+                int32_t i32 = 1;
+                uint32_t u32 = 1;
+                int64_t i64 = 1;
+                uint64_t u64 = 1;
+                float f = 1.0;
+                double d = 1.0;
+                long double ld = 1.0;
+                host = "test failed";
+                s = libtext::read(input.c_str(), sep.c_str(), &i8, &host, &u8,
+                            &i16, &u16, &i32, &u32, &i64, &u64, &f, &d, &ld);
+                ASSERT(s);
+                ASSERT(i8 == -7, i8);
+                ASSERT(host == "k2", host);
+                ASSERT(u8 == 2, u8);
+                ASSERT(i16 == -76, i16);
+                ASSERT(u16 == 3, u16);
+                ASSERT(i32 == 6, i32);
+                ASSERT(u32 == 88, u32);
+                ASSERT(i64 == -88, i64);
+                ASSERT(u64 == 7, u64);
+                ASSERT(f == 4.5f, f);
+                ASSERT(d == 7.1, d);
+                ASSERT(ld == 8.4l, ld);
+
+                s = libtext::nextline(s);
+                ASSERT(s);
+                if (verbose)
+                    std::cout
+                        << "input = \"" << s << "\", sep = \"" << sep << "\""
+                        << std::endl;
+                s = libtext::read(s, sep.c_str(), &host, &port);
+                ASSERT(s);
+                ASSERT("x.com" == host, host);
+                ASSERT(80 == port, port);
+            }
+        }
+        break;
+    }
+    case 7:
         test_int<int8_t>(__LINE__);
         test_int<uint8_t>(__LINE__);
         test_int<int16_t>(__LINE__);
@@ -832,7 +777,7 @@ std::cout << "test input = " << input << std::endl;
         test_int<int64_t>(__LINE__);
         test_int<uint64_t>(__LINE__);
         break;
-    case 4:
+    case 8:
         int_underflow<int8_t>(__LINE__);
         int_underflow<int16_t>(__LINE__);
         int_underflow<int32_t>(__LINE__);
@@ -842,7 +787,7 @@ std::cout << "test input = " << input << std::endl;
         uint_underflow<uint16_t>(__LINE__);
         uint_underflow<uint32_t>(__LINE__);
         uint_underflow<uint64_t>(__LINE__);
-    case 5: {
+    case 9: {
             // float.
             float x = 7.7f, y = 8.8f;
             s = libtext::read("1234.2,2876.3", ",", &x, &y);
@@ -886,17 +831,17 @@ std::cout << "test input = " << input << std::endl;
             ASSERT(y == 8.8l, y);
         }
         break;
-    case 6:
+    case 10:
         float_overflow<float>(__LINE__);
         float_overflow<double>(__LINE__);
         float_overflow<long double>(__LINE__);
         break;
-    case 7:
+    case 11:
 //        float_underflow<float>(__LINE__);
 //        float_underflow<double>(__LINE__);
 //        float_underflow<long double>(__LINE__);
         break;
-    case 8:
+    case 12:
         test_parsing<std::string>(__LINE__);
         test_parsing<int8_t>(__LINE__);
         test_parsing<uint8_t>(__LINE__);
@@ -910,7 +855,7 @@ std::cout << "test input = " << input << std::endl;
         test_parsing<double>(__LINE__);
         test_parsing<long double>(__LINE__);
         break;
-    case 9:
+    case 13:
         // Cannot initialize an integer with a string.
         wrong_type<int8_t>(__LINE__);
         wrong_type<uint8_t>(__LINE__);
@@ -924,19 +869,48 @@ std::cout << "test input = " << input << std::endl;
         wrong_type<double>(__LINE__);
         wrong_type<long double>(__LINE__);
         break;
-    case 10: {
-        // nextline.
-        const char* input = "hello\nworld";
-        input = libtext::nextline(input);
-        ASSERT(*input == 'w', input);
-        input = "hello world";
-        input = libtext::nextline(input);
-        ASSERT(!*input);
-        input = libtext::nextline("");
-        ASSERT(!*input);
+    case 14: {
+        // If separator is \n or "a character missing in a line"
+        // then read reads the whole line with trailing and leading ' ' and \t
+        // stripped.
+        const char* seps[] = {"\n", ";", 0};
+        const char* input[] = {"45 \t : \t51", " \t 45 \t : \t51 \t ",
+                                            " \t 45 \t : \t51\n\t47; 50", 0};
+        for (const char** separ = seps; *separ; ++separ) {
+            const char* sep = *separ;
+            for (const char** in = input; *in; ++in) {
+                success(*in, sep, input[0]);
+                failure<int8_t>(*in, sep, 45);
+                failure<uint8_t>(*in, sep, 45);
+                failure<int16_t>(*in, sep, 45);
+                failure<uint16_t>(*in, sep, 45);
+                failure<int32_t>(*in, sep, 45);
+                failure<uint32_t>(*in, sep, 45);
+                failure<int64_t>(*in, sep, 45);
+                failure<uint64_t>(*in, sep, 45);
+                failure<float>(*in, sep, 45.0f);
+                failure<double>(*in, sep, 45.0);
+                failure<long double>(*in, sep, 45.0l);
+            }
+        }
         break;
     }
-    case 11: {
+    case 15: {
+        // input has 1 space/tab, sep is 2 spaces/tabs.
+        const char* input = "example.com 80";
+        s = libtext::read(input, "  ", &host, &port);
+        ASSERT(!s, s);
+        ASSERT(host == input, host, input);
+        ASSERT(port == 77, port);
+
+        input = "example.com\t80";
+        s = libtext::read(input, "\t\t", &host, &port);
+        ASSERT(!s, s);
+        ASSERT(host == input, host, input);
+        ASSERT(port == 77, port);
+        break;
+    }
+    case 16: {
         // oneline.
         const char* input = "hello\nworld";
         std::string s = libtext::oneline(input);
@@ -948,32 +922,7 @@ std::cout << "test input = " << input << std::endl;
         ASSERT(s.empty(), s);
         break;
     }
-    case 12: {
-        // If separator is \0, \n or "a character missing in a line"
-        // then read reads the whole line with trailing and leading ' ' and \t
-        // stripped.
-        const char* seps[] = {"", "\n", ";", 0};
-        const char* input[] = {"45 \t : \t51", " \t 45 \t : \t51 \t ",
-                                            " \t 45 \t : \t51\n\t47; 50", 0};
-        for (const char** sep = seps; *sep; ++sep) {
-            for (const char** in = input; *in; ++in) {
-                success(*in, *sep, input[0]);
-                failure<int8_t>(*in, *sep, 45);
-                failure<uint8_t>(*in, *sep, 45);
-                failure<int16_t>(*in, *sep, 45);
-                failure<uint16_t>(*in, *sep, 45);
-                failure<int32_t>(*in, *sep, 45);
-                failure<uint32_t>(*in, *sep, 45);
-                failure<int64_t>(*in, *sep, 45);
-                failure<uint64_t>(*in, *sep, 45);
-                failure<float>(*in, *sep, 45.0f);
-                failure<double>(*in, *sep, 45.0);
-                failure<long double>(*in, *sep, 45.0l);
-            }
-        }
-        break;
-    }
-    case 13: {
+    case 17: {
         // strip.
         struct t {
             static void p(const std::string& v, const std::string& exp,
@@ -1014,8 +963,8 @@ std::cout << "test input = " << input << std::endl;
         t::p(",." + v + ".,", v, ".,");
         t::p(",..," + v + ".;", v, ".;,");
         break;
-   }
-   default:
+    }
+    default:
         std::cerr << "case " << test << " not found" << std::endl;
         status = 65;
     }

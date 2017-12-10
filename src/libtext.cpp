@@ -1,7 +1,4 @@
 #include <libtext.h>
-
-#include <iostream>
-
 #include <limits>
 #include <string.h>
 #include <errno.h>
@@ -11,7 +8,6 @@
 
 namespace libtext
 {
-
 // Return 1 if 'input' points at the end of the line or at the end of the string.
 // Return 0 otherwise.
 static int eol(const char* input)
@@ -24,14 +20,26 @@ static int ws(const char* input)
     return ' ' == *input || '\t' == *input;
 }
 
-// Return 1 if the first character of 'input' is the same as the first
-// character of 'sep'. Consider space and tab equal.
-// Return 0 otherwise.
-static int issep(const char* input, const char* sep)
+// Return 1 if the first character of x is the same as the first character of
+// y. Consider a space to be equal to a tab.
+static int same(const char* x, const char* y)
 {
-    if (ws(sep))
-        return ws(input);
-    return *input == *sep;
+    if (ws(x))
+        return ws(y);
+    return *x == *y;
+}
+
+// If 'input' begins with 'sep' on this line then return the address of the
+// character immediately following 'sep' on this line. If 'input' does not
+// bebing with 'sep' on this line then return 0.
+// Consider space and tab equal.
+static const char* skipsep(const char* input, const char* sep)
+{
+    while (*input && !eol(input) && *sep && same(input, sep))
+        ++input, ++sep;
+    if (*sep)
+        return 0; // Strings don't match.
+    return input;
 }
 
 // Skip the initial optional space of arbitrary length.
@@ -44,45 +52,41 @@ static int issep(const char* input, const char* sep)
 // separator.
 static const char* next(const char* input, const char* sep)
 {
-std::cout << "input = " << input << std::endl;
     if (!ws(sep))
         input += strspn(input, " \t");
-    if (eol(input)) {
-std::cout << "eol" << std::endl;
+    if (eol(input))
         // Return 'input' to let the caller detect a possible malformed input
         // should the user expect more fields.
         return input;
-    }
-    if (!issep(input, sep)) {
-std::cerr << "expected separator not found" << std::endl;
+    input = skipsep(input, sep);
+    if (!input)
         return 0; // Expected separator is not found.
-    }
-    ++input; // Skip the separator.
     input += strspn(input, " \t");
     if (ws(sep))
         return input;
-    if (issep(input, sep)) {
-std::cerr << "multiple consecutive separators" << std::endl;
+    if (skipsep(input, sep))
         return 0; // Multiple consecutive separators
-    }
-    if (eol(input)) {
-std::cerr << "string ends with a separator" << std::endl;
+    if (eol(input))
         return 0; // String ends with a separator other than ws.
-    }
+    return input;
+}
+
+// Return the next occurence of 'sep' in 'input' on this line.
+// If 'sep' in not present in 'input' on this line then return the
+// address of the end of line character in 'input'. eol is \n or \0.
+static const char* nextsep(const char* input, const char* sep)
+{
+    while (*input && !eol(input) && !skipsep(input, sep))
+        ++input;
     return input;
 }
 
 const char* read(const char* input, const char* sep, std::string* result)
 {
-std::cout << "input = " << input << std::endl;
     // Skip white space.
     input += strspn(input, " \t");
-std::cout << "input = " << input << std::endl;
-    const char* s = input;
     // Read a word.
-    while (!eol(s) && !issep(s, sep))
-        ++s;
-std::cout << "s = " << s << std::endl;
+    const char* s = nextsep(input, sep);
     if (s == input)
         return 0; // Have not read anything.
     // Have read something.
@@ -94,18 +98,14 @@ std::cout << "s = " << s << std::endl;
         while (ws(--p));
         assert(p >= input);
         assert(!ws(p));
-std::cout << "p = " << p << std::endl;
         result->assign(input, p-input+1);
-std::cout << "result = " << *result << std::endl;
     }
-std::cout << "s = " << s << std::endl;
     return next(s, sep);
 }
 
 template <class T>
 static const char* readll(const char* input, const char* sep, T* result)
 {
-std::cout << "readll input = " << input << std::endl;
     // strtoull skips leading space, \t, \n, \v, \f, \r.
     // Detect malformed input by skipping " \t" and checking if the following
     // char is a space as determined by isspace.
@@ -115,7 +115,6 @@ std::cout << "readll input = " << input << std::endl;
     char* r;
     errno = 0;
     const long long v = strtoll(input, &r, 0);
-std::cout << "v = " << v << std::endl;
     if (errno || r == input)
         return 0;
     if (std::numeric_limits<T>::max() < v)
@@ -124,7 +123,6 @@ std::cout << "v = " << v << std::endl;
         return 0; // Underflow.
     if (result) {
         *result = (T) v;
-std::cout << "*result = " << *result << std::endl;
     }
     return next(r, sep);
 }
@@ -132,7 +130,6 @@ std::cout << "*result = " << *result << std::endl;
 template <class T>
 static const char* readull(const char* input, const char* sep, T* result)
 {
-std::cout << "input = " << input << std::endl;
     // strtoull skips leading space, \t, \n, \v, \f, \r.
     // Detect malformed input by skipping " \t" and checking if the following
     // char is a space as determined by isspace.
@@ -154,9 +151,6 @@ std::cout << "input = " << input << std::endl;
         return 0; // Underflow.
     if (result)
         *result = (T) v;
-
-std::cout << "result = " << *result << std::endl;
-std::cout << "r = " << r << std::endl;
     return next(r, sep);
 }
 
