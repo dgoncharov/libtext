@@ -24,8 +24,6 @@ template <class T, class... A>
 const char* read(const char* input, const char* sep, T result, const A&... a);
 const char* nextline(const char* input);
 std::string oneline(const char* input);
-void strip(std::string* input, const char* reject);
-char* strip(char* input, const char* reject);
 
 .SH "DESCRIPTION"
 read reads a line from input, validates that the line is well formed and splits
