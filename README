@@ -2,11 +2,11 @@ libtext(3)                       User commands                      libtext(3)
 
 
 
-[1mNAME[0m
+NAME
        libtext - split a line into fields.
 
 
-[1mSYNOPSIS[0m
+SYNOPSIS
        #include <libtext/libtext.h>
 
        const char* read(const char* input, const char* sep, std::string* result);
@@ -28,7 +28,7 @@ libtext(3)                       User commands                      libtext(3)
        std::string oneline(const char* input);
 
 
-[1mDESCRIPTION[0m
+DESCRIPTION
        read  reads  a  line from input, validates that the line is well formed
        and splits the line to a sequence of fields separated by  the  contents
        of  sep.  The arguments that follow sep are all output arguments.   The
@@ -68,7 +68,7 @@ libtext(3)                       User commands                      libtext(3)
        until the first newline character.
 
 
-[1mRETURN VALUE[0m
+RETURN VALUE
        If a well formed line has more fields than there are  output  arguments
        then  read  returns  the address of the field immediately following the
        rightmost read field. If a well formed line  has  the  same  number  of
@@ -85,7 +85,7 @@ libtext(3)                       User commands                      libtext(3)
        input the one line return a copy of input.
 
 
-[1mEXAMPLE[0m
+EXAMPLE
        This  program  shows  how to use libtext::read to populate an in memory
        data structure holding a copy of /etc/fstab contents.
 
@@ -163,20 +163,20 @@ libtext(3)                       User commands                      libtext(3)
            return 0;
        }
 
-[1mAUTHORS[0m
+AUTHORS
        Dmitry Goncharov <dgoncharov@users.sf.net>
 
 
-[1mCOPYRIGHT[0m
+COPYRIGHT
        Copyright (C) 2017 Dmitry Goncharov.
        Distributed under the BSD license.
 
 
-[1mHOMEPAGE[0m
+HOMEPAGE
        https://github.com/dgoncharov/libtext
 
 
-[1mSEE ALSO[0m
+SEE ALSO
        libtext::read is designed after shell read. Compare
        $ IFS=: read host port <<< "example.com:80"
 
