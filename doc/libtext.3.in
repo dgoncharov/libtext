@@ -1,7 +1,7 @@
 .TH "libtext" "3" "17 May 2017"  "libtext 1.0.0" "User commands"
 
 .SH "NAME"
-libtext \- text manipulation routines.
+libtext \- split a line into fields.
 
 .SH "SYNOPSIS"
 .nf
@@ -104,4 +104,12 @@ Distributed under the BSD license.
 https://github.com/dgoncharov/libtext
 
 .SH "SEE ALSO"
-.BR read (1)
+.nf
+libtext::read is designed after shell read. Compare
+$ IFS=: read host port <<< "example.com:80"
+
+std::string host;
+uint16_t port;
+libtext::read("example.com:80", ":", &host, &port);
+
+Shell Command Language, read.
