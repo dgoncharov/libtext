@@ -945,48 +945,6 @@ int main(int argc, char* argv[])
         ASSERT(s.empty(), s);
         break;
     }
-    case 17: {
-        // strip.
-        struct t {
-            static void p(const std::string& v, const std::string& exp,
-                                                            const char* reject)
-            {
-                std::string r = v;
-                libtext::strip(&r, reject);
-                ASSERT(r == exp, r, exp, v, reject);
-                if (verbose)
-                    std::cout
-                        << "input = " << v << ", result = " << r
-                        << ", reject = " << reject
-                        << std::endl;
-
-                char b[64];
-                memcpy(b, v.c_str(), v.size()+1);
-                ASSERT(b == v, b, v);
-                const char* s = libtext::strip(b, reject);
-                ASSERT(s == exp, s, exp, v, b, reject);
-                if (verbose)
-                    std::cout
-                        << "input = " << v << ", result = " << s
-                        << ", reject = " << reject
-                        << '\n' << std::endl;
-            }
-        };
-        const std::string v = "192.169.1.1";
-        t::p(v, v, ".");
-        t::p(v, v, "");
-        t::p("." + v + ".", v, ".");
-        t::p("." + v, v, ".");
-        t::p("..," + v, v, ".,");
-        t::p(v + ".,.", v, ",.");
-        t::p(".." + v + "..", v, ".");
-        t::p("....", "", ".");
-        t::p("", "", ".");
-        t::p("", "", "");
-        t::p(",." + v + ".,", v, ".,");
-        t::p(",..," + v + ".;", v, ".;,");
-        break;
-    }
     default:
         std::cerr << "case " << test << " not found" << std::endl;
         status = 65;

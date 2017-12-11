@@ -33,7 +33,5 @@ const char* read(const char* input, const char* sep, T result,  U... u)
 }
 const char *nextline(const char* input);
 std::string oneline(const char* input);
-void strip(std::string* input, const char* reject);
-char* strip(char* input, const char* reject);
 } // libtext
 #endif

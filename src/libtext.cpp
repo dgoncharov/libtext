@@ -6,8 +6,6 @@
 #include <assert.h>
 #include <stdlib.h>
 
-namespace libtext
-{
 // Return 1 if 'input' points at the end of the line or at the end of the string.
 // Return 0 otherwise.
 static int eol(const char* input)
@@ -81,28 +79,6 @@ static const char* nextsep(const char* input, const char* sep)
     return input;
 }
 
-const char* read(const char* input, const char* sep, std::string* result)
-{
-    // Skip white space.
-    input += strspn(input, " \t");
-    // Read a word.
-    const char* s = nextsep(input, sep);
-    if (s == input)
-        return 0; // Have not read anything.
-    // Have read something.
-    assert(s > input);
-    assert(!ws(input));
-    if (result) {
-        const char* p = s;
-        assert(p > input);
-        while (ws(--p));
-        assert(p >= input);
-        assert(!ws(p));
-        result->assign(input, p-input+1);
-    }
-    return next(s, sep);
-}
-
 template <class T>
 static const char* readll(const char* input, const char* sep, T* result)
 {
@@ -154,36 +130,30 @@ static const char* readull(const char* input, const char* sep, T* result)
     return next(r, sep);
 }
 
-//template <class T>
-//static const char* read_int(const char* input, T* result)
-//{
-//    const char *p = input;
-//    // Read a word.
-//    T v = 0;
-//    for (; *p && isdigit(*p); ++p) {
-//        const T b = v * 10 + T(*p) - '0';
-//        if (b < v)
-//            // Integer overflow.
-//            return 0;
-//        v = b;
-//    }
-//    if (p == input)
-//        return 0; // Have not read anything.
-//    if (result)
-//        *result = v;
-//    if ('\n' == *p)
-//        return p;
-//    if (*p && eol(p+1) && !isdigit(*p))
-//        return 0; // String ends with a separator other than \n.
-//
-//    // If \n is found before all parameters are initialized that's malformed
-//    // input. If \n is found after all parameters are initialized that's fine.
-//    // This code does not know whether all parameters are initialized.
-//    // Therefore, don't return 0. The caller has to check if \n is found before
-//    // all parameters are initialized.
-//    return next(p);
-//}
-//
+namespace libtext
+{
+const char* read(const char* input, const char* sep, std::string* result)
+{
+    // Skip white space.
+    input += strspn(input, " \t");
+    // Read a word.
+    const char* s = nextsep(input, sep);
+    if (s == input)
+        return 0; // Have not read anything.
+    // Have read something.
+    assert(s > input);
+    assert(!ws(input));
+    if (result) {
+        const char* p = s;
+        assert(p > input);
+        while (ws(--p));
+        assert(p >= input);
+        assert(!ws(p));
+        result->assign(input, p-input+1);
+    }
+    return next(s, sep);
+}
+
 const char* read(const char* input, const char* sep, uint8_t* result)
 {
     return readull(input, sep, result);
@@ -293,31 +263,5 @@ const char* nextline(const char* input)
 std::string oneline(const char* input)
 {
     return std::string(input, strcspn(input, "\n"));
-}
-
-void strip(std::string* input, const char* reject)
-{
-    std::string& r = *input;
-    const size_t k = strspn(r.c_str(), reject);
-    size_t len = r.size();
-    assert(len >= k);
-    while (len-k && strchr(reject, r[len - 1]))
-        --len;
-    assert(len >= k);
-    assert(len <= r.size());
-    if (k)
-        r = r.substr(k, len-k);
-    else
-        r.resize(len); // If len == r.size() then this resize is a noop.
-}
-
-char* strip(char* input, const char* reject)
-{
-    input += strspn(input, reject);
-    size_t len = strlen(input);
-    while (len && strchr(reject, input[len - 1]))
-        --len;
-    input[len] = '\0';
-    return input;
 }
 } // libtext
