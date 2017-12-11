@@ -420,6 +420,12 @@ static void test_parsing(int line)
     s = libtext::read("", ",", 0);
     ASSERT(!s, s, line);
 
+    s = libtext::read(",", ",", &x);
+    ASSERT(!s, s, line);
+
+    s = libtext::read(",", ",", 0);
+    ASSERT(!s, s, line);
+
     // No separator in input.
     s = libtext::read("51", ",", &x);
     ASSERT(s, line);
@@ -649,6 +655,18 @@ int main(int argc, char* argv[])
         break;
     }
     case 3: {
+        // Separator is longer than input.
+        const char* input = "a";
+        s = libtext::read(input, "~|~", &host);
+        ASSERT(s);
+        ASSERT(!*s, s);
+        ASSERT(input == host, host);
+        input = "a~|~5";
+        s = libtext::read(input, "~|~", &host, &port);
+        ASSERT(s);
+        ASSERT(!*s, s);
+        ASSERT("a" == host, host);
+        ASSERT(5 == port, port);
         break;
     }
     case 4: {
@@ -715,6 +733,11 @@ int main(int argc, char* argv[])
         for (const char** separ = seps; *separ; ++separ) {
             for (const char** car = caret; *car; ++car) {
                 std::string sep = *separ;
+                if (verbose)
+                    std::cout
+                        << "\ncar = \"" << *car
+                        << "\", sep = \"" << sep << "\""
+                        << std::endl;
                 std::string input =
                     "^-7:k2:2:-76:3:6:88:-88:7:4.5:7.1:8.4^\n^x.com:80^\n";
                 replace(&input, ":", sep);
