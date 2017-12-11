@@ -265,3 +265,10 @@ std::string oneline(const char* input)
     return std::string(input, strcspn(input, "\n"));
 }
 } // libtext
+
+/*
+ * Copyright (c) 2017 Dmitry Goncharov
+ *
+ * Distributed under the BSD License.
+ * (See accompanying file COPYING).
+ */

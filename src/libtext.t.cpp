@@ -953,3 +953,10 @@ int main(int argc, char* argv[])
         std::cout << "status = " << status << std::endl;
     return status;
 }
+
+/*
+ * Copyright (c) 2017 Dmitry Goncharov
+ *
+ * Distributed under the BSD License.
+ * (See accompanying file COPYING).
+ */
