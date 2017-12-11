@@ -69,9 +69,6 @@ newline character in the input.
 oneline builds a copy of a substring of the input from the beginning until the
 first newline character.
 
-strip removes leading and trailing segments of input which consist entirely of
-characters in reject.
-
 .SH "RETURN VALUE"
 If a well formed line has more fields than there are output arguments then read
 returns the address of the field immediately following the rightmost read
@@ -87,9 +84,6 @@ then nextline returns the address of the null terminator.
 oneline returns a copy of a substring of the input from the beginning until the
 first newline character. If there is no newline character in input the one line
 return a copy of input.
-
-strip returns the address of the first such character of input that is not in
-reject.
 
 .SH "EXAMPLE"
 This program shows how to use libtext::read to populate an in memory data
