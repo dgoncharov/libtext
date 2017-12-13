@@ -33,6 +33,7 @@ assigned to the output argument that follows sep.  If the variadic overload is
 used then the second field is assigned to the next output argument, etc.  read
 converts the value of the read field from const char* to the type of the output
 argument.
+.br
 The line is well formed when the line is a sequence of fields separated by the
 contents of sep and the line begins and ends with a field and the value of each
 field can be converted to the type of the related output argument and the line
@@ -40,25 +41,13 @@ has enough fields to initialize all output arguments.  If the line has fewer
 fields than there are output arguments then read initializes as many output
 arguments as there are fields (starting from the leftmost) and keeps the
 subsequent output arguments intact.
+.br
 An output argument can be 0 or an address of a variable of one of the following
 types int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t,
 float, double, long double, std::string.  If an output argument has value 0
-then read does not assign the related field.
-.nf
-
-std::string host;
-uint16_t port;
-libtext::read("example.com:80", ":", &host, &port);
-assert(host == "example.com");
-assert(port == 80);
-libtext::read("example.com:80", ":", 0, &port);
-// "example.com" is not assinged to any output argument.
-assert(port == 80);
-
-.fi
-Passing any integer other than 0 as value of an output argument causes
-undefined behavior.
-
+then read does not assign the related field.  Passing any integer other than 0
+as value of an output argument causes undefined behavior.
+.br
 While reading a field read skips trailing and leading spaces and horizontal
 tabs of arbitrary length. While matching a char in sep against a char in input
 read considers space equal horizontal tab.  It is necessary to consider space
@@ -108,11 +97,4 @@ https://github.com/dgoncharov/libtext
 
 .SH "SEE ALSO"
 .nf
-libtext::read is designed after shell read. Compare
-$ IFS=: read host port <<< "example.com:80"
-
-std::string host;
-uint16_t port;
-libtext::read("example.com:80", ":", &host, &port);
-
 Shell Command Language, read.
