@@ -24,7 +24,7 @@ template <class T, class... A>
 const char* read(const char* input, const char* sep, T result, const A&... a);
 const char* nextline(const char* input);
 std::string oneline(const char* input);
-
+.fi
 .SH "DESCRIPTION"
 read reads a line from input, validates that the line is well formed and splits
 the line to a sequence of fields separated by the contents of sep. The
@@ -44,7 +44,8 @@ An output argument can be 0 or an address of a variable of one of the following
 types int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t,
 float, double, long double, std::string.  If an output argument has value 0
 then read does not assign the related field.
-E.g.
+.nf
+
 std::string host;
 uint16_t port;
 libtext::read("example.com:80", ":", &host, &port);
@@ -53,6 +54,8 @@ assert(port == 80);
 libtext::read("example.com:80", ":", 0, &port);
 // "example.com" is not assinged to any output argument.
 assert(port == 80);
+
+.fi
 Passing any integer other than 0 as value of an output argument causes
 undefined behavior.
 
