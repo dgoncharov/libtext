@@ -3,9 +3,18 @@
 
 #include <string>
 #include <stdint.h>
+#undef have_string_view
+#if defined __has_include && __has_include(<string_view>)\
+                                                    && __cplusplus >= 201703L
+#include <string_view>
+#define have_string_view 1
+#endif
 
 namespace libtext {
 const char* read(const char* input, const char* sep, std::string* result);
+#ifdef have_string_view
+const char* read(const char* input, const char* sep, std::string_view* result);
+#endif
 const char* read(const char* input, const char* sep, uint8_t* result);
 const char* read(const char* input, const char* sep, uint16_t* result);
 const char* read(const char* input, const char* sep, uint32_t* result);

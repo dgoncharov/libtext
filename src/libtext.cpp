@@ -130,9 +130,8 @@ static const char* readull(const char* input, const char* sep, T* result)
     return next(r, sep);
 }
 
-namespace libtext
-{
-const char* read(const char* input, const char* sep, std::string* result)
+template <class R>
+static const char* reads(const char* input, const char* sep, R* result)
 {
     // Skip white space.
     input += strspn(input, " \t");
@@ -149,10 +148,25 @@ const char* read(const char* input, const char* sep, std::string* result)
         while (ws(--p));
         assert(p >= input);
         assert(!ws(p));
-        result->assign(input, p-input+1);
+        R tmp(input, p-input+1);
+        result->swap(tmp);
     }
     return next(s, sep);
 }
+
+namespace libtext
+{
+const char* read(const char* input, const char* sep, std::string* result)
+{
+    return reads(input, sep, result);
+}
+
+#ifdef have_string_view
+const char* read(const char* input, const char* sep, std::string_view* result)
+{
+    return reads(input, sep, result);
+}
+#endif
 
 const char* read(const char* input, const char* sep, uint8_t* result)
 {

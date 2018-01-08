@@ -8,6 +8,12 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#ifdef have_string_view
+typedef std::string_view string_view_t;
+#else
+typedef std::string string_view_t;
+#endif
+
 static int verbose = 0;
 
 template <class T>
@@ -570,14 +576,111 @@ int replace(std::string* input, const std::string& x, const std::string& y)
     return n;
 }
 
+template <class T>
+static void case1(int line)
+{
+    // Simple well defined input.
+    const char* s;
+    const char* input = "example.com";
+    T host = "test failed";
+    s = libtext::read(input, ":", &host);
+    ASSERT(s, line);
+    ASSERT(!*s, s, line);
+    ASSERT(input == host, host, line);
+
+    input = "example.com\n";
+    host = "test failed";
+    s = libtext::read(input, ":", &host);
+    ASSERT(s, line);
+    ASSERT(*s == '\n', s, line);
+    ASSERT("example.com" == host, host, line);
+
+    input = "example.com:80";
+    host = "test failed";
+    s = libtext::read(input, ":", &host);
+    ASSERT(s, line);
+    ASSERT(s == strstr(input, "80"), s, input, line);
+    ASSERT("example.com" == host, host, line);
+
+    host = "test failed";
+    uint16_t port = 77;
+    s = libtext::read(input, ":", &host, &port);
+    ASSERT(s, line);
+    ASSERT(!*s, s, line);
+    ASSERT("example.com" == host, host, line);
+    ASSERT(port == 80, port, line);
+}
+
+template <class T>
+static void case3(int line)
+{
+    // Separator is longer than input.
+    const char* s;
+    T host = "test failed";
+    uint16_t port = 77;
+    const char* input = "a";
+    s = libtext::read(input, "~|~", &host);
+    ASSERT(s, line);
+    ASSERT(!*s, s, line);
+    ASSERT(input == host, host, line);
+    input = "a~|~5";
+    s = libtext::read(input, "~|~", &host, &port);
+    ASSERT(s, line);
+    ASSERT(!*s, s, line);
+    ASSERT("a" == host, host, line);
+    ASSERT(5 == port, port, line);
+}
+
+template <class T>
+static void case4(int line)
+{
+    // Multiple lines.
+    const char* s;
+    const char* input = "example.com:80\n192.168.1.1:8080";
+    T host = "test failed";
+    uint16_t port = 77;
+    s = libtext::read(input, ":", &host, &port);
+    ASSERT(s, line);
+    ASSERT(s == strchr(input, '\n'), s, input, line);
+    ASSERT("example.com" == host, host, line);
+    ASSERT(port == 80, port, line);
+    s = libtext::nextline(s);
+    ASSERT(s, line);
+    ASSERT(s == strstr(input, "192"), s, input, line);
+    s = libtext::read(s, ":", &host, &port);
+    ASSERT(s, line);
+    ASSERT(!*s, s, line);
+    ASSERT("192.168.1.1" == host, host, line);
+    ASSERT(port == 8080, port, line);
+}
+
+template <class T>
+static void case15(int line)
+{
+    // input has 1 space/tab, sep is 2 spaces/tabs.
+    const char* s;
+    T host = "test failed";
+    uint16_t port = 77;
+    const char* input = "example.com 80";
+    s = libtext::read(input, "  ", &host, &port);
+    ASSERT(!s, s, line);
+    ASSERT(host == input, host, input, line);
+    ASSERT(port == 77, port, line);
+
+    input = "example.com\t80";
+    s = libtext::read(input, "\t\t", &host, &port);
+    ASSERT(!s, s, line);
+    ASSERT(host == input, host, input, line);
+    ASSERT(port == 77, port, line);
+
+}
+
 int main(int argc, char* argv[])
 {
     const int test = argc > 1 ? atoi(argv[1]) : 0;
     verbose = argc > 2;
     std::cout << "test " << __FILE__ << " case " << test << std::endl;
 
-    std::string host = "test failed";
-    uint16_t port = 77;
     const char* s;
     switch (test) {
     case 0: {
@@ -593,35 +696,10 @@ int main(int argc, char* argv[])
         break;
     }
     case 1: {
-        // Simple well defined input.
-        const char* input = "example.com";
-        host = "test failed";
-        s = libtext::read(input, ":", &host);
-        ASSERT(s);
-        ASSERT(!*s, s);
-        ASSERT(input == host, host);
-
-        input = "example.com\n";
-        host = "test failed";
-        s = libtext::read(input, ":", &host);
-        ASSERT(s);
-        ASSERT(*s == '\n', s);
-        ASSERT("example.com" == host, host);
-
-        input = "example.com:80";
-        host = "test failed";
-        s = libtext::read(input, ":", &host);
-        ASSERT(s);
-        ASSERT(s == strstr(input, "80"), s, input);
-        ASSERT("example.com" == host, host);
-
-        host = "test failed";
-        uint16_t port = 77;
-        s = libtext::read(input, ":", &host, &port);
-        ASSERT(s);
-        ASSERT(!*s, s);
-        ASSERT("example.com" == host, host);
-        ASSERT(port == 80, port);
+        case1<std::string>(__LINE__);
+#ifdef have_string_view
+        case1<std::string_view>(__LINE__);
+#endif
         break;
     }
     case 2: {
@@ -655,43 +733,22 @@ int main(int argc, char* argv[])
         break;
     }
     case 3: {
-        // Separator is longer than input.
-        const char* input = "a";
-        s = libtext::read(input, "~|~", &host);
-        ASSERT(s);
-        ASSERT(!*s, s);
-        ASSERT(input == host, host);
-        input = "a~|~5";
-        s = libtext::read(input, "~|~", &host, &port);
-        ASSERT(s);
-        ASSERT(!*s, s);
-        ASSERT("a" == host, host);
-        ASSERT(5 == port, port);
+        case3<std::string>(__LINE__);
+#ifdef have_string_view
+        case3<std::string_view>(__LINE__);
+#endif
         break;
     }
     case 4: {
-        // Multiple lines.
-        const char* input = "example.com:80\n192.168.1.1:8080";
-        host = "test failed";
-        port = 77;
-        s = libtext::read(input, ":", &host, &port);
-        ASSERT(s);
-        ASSERT(s == strchr(input, '\n'), s, input);
-        ASSERT("example.com" == host, host);
-        ASSERT(port == 80, port);
-        s = libtext::nextline(s);
-        ASSERT(s);
-        ASSERT(s == strstr(input, "192"), s, input);
-        s = libtext::read(s, ":", &host, &port);
-        ASSERT(s);
-        ASSERT(!*s, s);
-        ASSERT("192.168.1.1" == host, host);
-        ASSERT(port == 8080, port);
+        case4<std::string>(__LINE__);
+#ifdef have_string_view
+        case4<std::string_view>(__LINE__);
+#endif
         break;
     }
     case 5: {
         // Mix of string, int and float types.
-        const char* input = "-7:k2:2:-76:3:6:88:-88:7:4.5:7.1:8.4";
+        const char* input = "-7:k2:u1:2:-76:3:6:88:-88:7:4.5:7.1:8.4";
         int8_t i8 = 1;
         uint8_t u8 = 1;
         int16_t i16 = 1;
@@ -703,13 +760,15 @@ int main(int argc, char* argv[])
         float f = 1.0;
         double d = 1.0;
         long double ld = 1.0;
-        host = "test failed";
-        s = libtext::read(input, ":", &i8, &host, &u8, &i16, &u16, &i32, &u32,
-                                                    &i64, &u64, &f, &d, &ld);
+        std::string host = "test failed";
+        string_view_t user = "test failed";
+        s = libtext::read(input, ":", &i8, &host, &user, &u8, &i16, &u16, &i32,
+                                                &u32, &i64, &u64, &f, &d, &ld);
         ASSERT(s);
         ASSERT(!*s, *s);
         ASSERT(i8 == -7, i8);
         ASSERT(host == "k2", host);
+        ASSERT(user == "u1", user);
         ASSERT(u8 == 2, u8);
         ASSERT(i16 == -76, i16);
         ASSERT(u16 == 3, u16);
@@ -739,7 +798,7 @@ int main(int argc, char* argv[])
                         << "\", sep = \"" << sep << "\""
                         << std::endl;
                 std::string input =
-                    "^-7:k2:2:-76:3:6:88:-88:7:4.5:7.1:8.4^\n^x.com:80^\n";
+                    "^-7:k2:u1:2:-76:3:6:88:-88:7:4.5:7.1:8.4^\n^x.com:80^\n";
                 replace(&input, ":", sep);
                 replace(&sep, "^", "");
                 replace(&input, "^", *car);
@@ -759,12 +818,16 @@ int main(int argc, char* argv[])
                 float f = 1.0;
                 double d = 1.0;
                 long double ld = 1.0;
-                host = "test failed";
-                s = libtext::read(input.c_str(), sep.c_str(), &i8, &host, &u8,
-                            &i16, &u16, &i32, &u32, &i64, &u64, &f, &d, &ld);
+                std::string host = "test failed";
+                string_view_t user = "test failed";
+                uint16_t port = 77;
+                s = libtext::read(input.c_str(), sep.c_str(), &i8, &host,
+                    &user, &u8, &i16, &u16, &i32, &u32, &i64, &u64, &f, &d,
+                    &ld);
                 ASSERT(s);
                 ASSERT(i8 == -7, i8);
                 ASSERT(host == "k2", host);
+                ASSERT(user == "u1", user);
                 ASSERT(u8 == 2, u8);
                 ASSERT(i16 == -76, i16);
                 ASSERT(u16 == 3, u16);
@@ -866,6 +929,9 @@ int main(int argc, char* argv[])
         break;
     case 12:
         test_parsing<std::string>(__LINE__);
+#ifdef have_string_view
+        test_parsing<std::string_view>(__LINE__);
+#endif
         test_parsing<int8_t>(__LINE__);
         test_parsing<uint8_t>(__LINE__);
         test_parsing<int16_t>(__LINE__);
@@ -919,18 +985,10 @@ int main(int argc, char* argv[])
         break;
     }
     case 15: {
-        // input has 1 space/tab, sep is 2 spaces/tabs.
-        const char* input = "example.com 80";
-        s = libtext::read(input, "  ", &host, &port);
-        ASSERT(!s, s);
-        ASSERT(host == input, host, input);
-        ASSERT(port == 77, port);
-
-        input = "example.com\t80";
-        s = libtext::read(input, "\t\t", &host, &port);
-        ASSERT(!s, s);
-        ASSERT(host == input, host, input);
-        ASSERT(port == 77, port);
+        case15<std::string>(__LINE__);
+#ifdef have_string_view
+        case15<std::string_view>(__LINE__);
+#endif
         break;
     }
     case 16: {

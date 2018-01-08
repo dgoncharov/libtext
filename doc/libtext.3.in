@@ -8,6 +8,7 @@ libtext \- split a line into fields.
 #include <libtext/libtext.h>
 
 const char* read(const char* input, const char* sep, std::string* result);
+const char* read(const char* input, const char* sep, std::string_view* result);
 const char* read(const char* input, const char* sep, uint8_t* result);
 const char* read(const char* input, const char* sep, uint16_t* result);
 const char* read(const char* input, const char* sep, uint32_t* result);
@@ -44,9 +45,9 @@ subsequent output arguments intact.
 .br
 An output argument can be 0 or an address of a variable of one of the following
 types int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t,
-float, double, long double, std::string.  If an output argument has value 0
-then read does not assign the related field.  Passing any integer other than 0
-as value of an output argument causes undefined behavior.
+float, double, long double, std::string, std::string_view.  If an output
+argument has value 0 then read does not assign the related field.  Passing any
+integer other than 0 as value of an output argument causes undefined behavior.
 .br
 While reading a field read skips trailing and leading spaces and horizontal
 tabs of arbitrary length. While matching a char in sep against a char in input
