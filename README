@@ -17,6 +17,23 @@ libtext::read("example.com:80", ":", 0, &port);
 assert(80 == port);
 
 
+This example shows how to parse contents of /etc/net/udp line by line.
+void read_udp(const char* input)
+{
+    input = libtext::nextline(input); // Skip the header.
+    std::string ip, addr, m, d;
+    int type, flags;
+    while (*input) {
+        input = libtext::read(input, " ", &ip, &type, &flags, &addr, &m, &d);
+        if (!input)
+            break;
+        // libtext::nextline allows to append new fields after the last field.
+        // Old binary will still be able to parse.
+        input = libtext::nextline(input);
+    }
+}
+
+
 There are also differences from shell read.
 
 Shell read uses any character in IFS as a field delimiter.
