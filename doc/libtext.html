@@ -1,0 +1,226 @@
+Content-type: text/html
+
+<HTML><HEAD><TITLE>Manpage of libtext</TITLE>
+</HEAD><BODY>
+<H1>libtext</H1>
+Section: User commands (3)<BR>Updated: 17 May 2017<BR><A HREF="#index">Index</A>
+<A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
+
+<P>
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+libtext - shell style text parsing in c++.
+<P>
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+#include &lt;<A HREF="file:/usr/include/libtext/libtext.h">libtext/libtext.h</A>&gt;
+
+const char* read(const char* input, const char* sep, std::string* result);
+const char* read(const char* input, const char* sep, std::string_view* result);
+const char* read(const char* input, const char* sep, uint8_t* result);
+const char* read(const char* input, const char* sep, uint16_t* result);
+const char* read(const char* input, const char* sep, uint32_t* result);
+const char* read(const char* input, const char* sep, uint64_t* result);
+const char* read(const char* input, const char* sep, int8_t* result);
+const char* read(const char* input, const char* sep, int16_t* result);
+const char* read(const char* input, const char* sep, int32_t* result);
+const char* read(const char* input, const char* sep, int64_t* result);
+const char* read(const char* input, const char* sep, float* result);
+const char* read(const char* input, const char* sep, double* result);
+const char* read(const char* input, const char* sep, long double* result);
+const char* read(const char* input, const char* sep, int result);
+template &lt;class T, class... A&gt;
+const char* read(const char* input, const char* sep, T result, const A&amp;... a);
+const char* nextline(const char* input);
+std::string oneline(const char* input);
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+read reads a line from input, validates that the line is well formed and splits
+the line to a sequence of fields separated by the contents of sep. The
+arguments that follow sep are all output arguments.   The first field is
+assigned to the output argument that follows sep.  If the variadic overload is
+used then the second field is assigned to the next output argument, etc.  read
+converts the value of the read field from const char* to the type of the output
+argument.
+<BR>
+
+The line is well formed when the line is a sequence of fields separated by the
+contents of sep and the line begins and ends with a field and the value of each
+field can be converted to the type of the related output argument and the line
+has enough fields to initialize all output arguments.  If the line has fewer
+fields than there are output arguments then read initializes as many output
+arguments as there are fields (starting from the leftmost) and keeps the
+subsequent output arguments intact.
+<BR>
+
+An output argument can be 0 or an address of a variable of one of the following
+types int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t,
+float, double, long double, std::string, std::string_view.  If an output
+argument has value 0 then read does not assign the related field.  Passing any
+integer other than 0 as value of an output argument causes undefined behavior.
+<BR>
+
+While reading a field read skips trailing and leading spaces and horizontal
+tabs of arbitrary length. While matching a char in sep against a char in input
+read considers space equal horizontal tab.  It is necessary to consider space
+equal tab to parse hand written files like /etc/fstab where space and tab are
+used interchangeably.
+<P>
+<P>
+nextline finds the address of the character immediately following the first
+newline character in the input.
+<P>
+oneline builds a copy of a substring of the input from the beginning until the
+first newline character.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+If a well formed line has more fields than there are output arguments then read
+returns the address of the field immediately following the rightmost read
+field. If a well formed line has the same number of fields as there are output
+arguments then read returns the address of the character that terminates the
+line (a new line character or a null terminator).  If the line is malformed
+read returns 0.
+<P>
+nextline returns the address of the character immediately following the first
+newline character in the input. If there is no newline character in the input
+then nextline returns the address of the null terminator.
+<P>
+oneline returns a copy of a substring of the input from the beginning until the
+first newline character. If there is no newline character in input the one line
+return a copy of input.
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+This program shows how to use libtext::read to populate an in memory data
+structure holding a copy of /etc/fstab contents.
+<PRE>
+
+#include &lt;<A HREF="file:/usr/include/libtext.h">libtext.h</A>&gt;
+#include &lt;fstream&gt;
+#include &lt;vector&gt;
+#include &lt;string&gt;
+#include &lt;algorithm&gt;
+#include &lt;iostream&gt;
+#include &lt;<A HREF="file:/usr/include/stddef.h">stddef.h</A>&gt;
+#include &lt;<A HREF="file:/usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:/usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:/usr/include/errno.h">errno.h</A>&gt;
+
+struct fsent {
+    std::string fs_spec;
+    std::string fs_file;
+    std::string fs_type;
+    std::string fs_opts;
+    int fs_freq;
+    int fs_passno;
+};
+
+int main(int argc, char* argv[])
+{
+    using std::cerr;
+    using std::endl;
+
+    std::vector&lt;char&gt; buf;
+    std::ifstream is(&quot;/etc/fstab&quot;);
+    if (!is) {
+        cerr &lt;&lt; &quot;cannot open /etc/fstab: &quot; &lt;&lt; strerror(errno) &lt;&lt; endl;
+        return EXIT_FAILURE;
+    }
+    is.seekg(0, is.end);
+    buf.resize(is.tellg() + 1l);
+    is.seekg(0, is.beg);
+    is.read(&amp;buf[0], buf.size() - 1);
+    buf.back() = '\0';
+    if (!is.good()) {
+        cerr &lt;&lt; &quot;cannot read /etc/fstab: &quot; &lt;&lt; strerror(errno) &lt;&lt; endl;
+        return EXIT_FAILURE;
+    }
+    is.close();
+    const char* input = &amp;buf[0];
+
+    size_t lineno = 1;
+    std::vector&lt;fsent&gt; v;
+    v.reserve(64);
+    for (; *input; input = libtext::nextline(input), ++lineno) {
+        // Skip empty lines and comments.
+        const char* s = input;
+        input += strspn(input, &quot; \t\n&quot;);
+        lineno += std::count(s, input, '\n');
+        if ('#' == *input || '\0' == *input)
+            continue;
+        v.resize(v.size() + 1);
+        fsent&amp; m = v.back();
+        s = input;
+        input = libtext::read(input, &quot; &quot;, &amp;m.fs_spec, &amp;m.fs_file,
+                        &amp;m.fs_type, &amp;m.fs_opts, &amp;m.fs_freq, &amp;m.fs_passno);
+        if (!input) {
+            cerr
+                &lt;&lt; &quot;malformed line /etc/fstab:&quot; &lt;&lt; lineno &lt;&lt; &quot; &quot;
+                &lt;&lt; libtext::oneline(s) &lt;&lt; endl;
+            return EXIT_FAILURE;
+        }
+    }
+    for (size_t k = 0, len = v.size(); k &lt; len; ++k)
+        std::cout
+            &lt;&lt; v[k].fs_spec &lt;&lt; &quot; &quot; &lt;&lt; v[k].fs_file &lt;&lt; &quot; &quot;
+            &lt;&lt; v[k].fs_type &lt;&lt; &quot; &quot; &lt;&lt; v[k].fs_opts &lt;&lt; &quot; &quot;
+            &lt;&lt; v[k].fs_freq &lt;&lt; &quot; &quot; &lt;&lt; v[k].fs_passno
+            &lt;&lt; std::endl;
+    return 0;
+}
+</PRE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>AUTHORS</H2>
+
+Dmitry Goncharov &lt;<A HREF="mailto:dgoncharov@users.sf.net">dgoncharov@users.sf.net</A>&gt;
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>COPYRIGHT</H2>
+
+Copyright (C) 2017 Dmitry Goncharov.
+<BR>
+
+Distributed under the BSD license.
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>HOMEPAGE</H2>
+
+<A HREF="https://github.com/dgoncharov/libtext">https://github.com/dgoncharov/libtext</A>
+<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<PRE>
+Shell Command Language, read.
+
+</PRE>
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">EXAMPLE</A><DD>
+<DT><A HREF="#lbAG">AUTHORS</A><DD>
+<DT><A HREF="#lbAH">COPYRIGHT</A><DD>
+<DT><A HREF="#lbAI">HOMEPAGE</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 00:06:30 GMT, January 15, 2018
+</BODY>
+</HTML>
