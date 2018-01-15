@@ -113,6 +113,10 @@ $ configure
 $ make
 $ make install
 ```
+##### To enable std::string_view overload with g++
+```
+$ make CXXFLAGS=-std=c++17
+```
 
 ##### To build example program that reads /etc/fstab
 ```
