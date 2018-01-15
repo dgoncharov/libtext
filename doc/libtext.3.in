@@ -1,7 +1,7 @@
 .TH "libtext" "3" "17 May 2017"  "libtext 1.0.0" "User commands"
 
 .SH "NAME"
-libtext \- split a line into fields.
+libtext \- shell style text parsing in c++.
 
 .SH "SYNOPSIS"
 .nf
