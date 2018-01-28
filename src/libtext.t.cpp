@@ -873,6 +873,7 @@ int main(int argc, char* argv[])
         uint_underflow<uint16_t>(__LINE__);
         uint_underflow<uint32_t>(__LINE__);
         uint_underflow<uint64_t>(__LINE__);
+        break;
     case 9: {
             // float.
             float x = 7.7f, y = 8.8f;
@@ -1001,6 +1002,17 @@ int main(int argc, char* argv[])
         ASSERT(s == input, s, input);
         s = libtext::oneline("");
         ASSERT(s.empty(), s);
+        break;
+    }
+    case 17: {
+        // utf-8 input and separator.
+        const char* input = "приветжжжмир";
+        std::string x, y;
+        s = libtext::read(input, "жжж", &x, &y);
+        ASSERT(s);
+        ASSERT(!*s, s);
+        ASSERT("привет" == x, x);
+        ASSERT("мир" == y, y);
         break;
     }
     default:
