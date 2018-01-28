@@ -86,7 +86,7 @@ static const char* readll(const char* input, const char* sep, T* result)
     // Detect malformed input by skipping " \t" and checking if the following
     // char is a space as determined by isspace.
     input += strspn(input, " \t");
-    if (isspace(*input))
+    if (isspace((unsigned char) *input))
         return 0;
     char* r;
     errno = 0;
@@ -110,7 +110,7 @@ static const char* readull(const char* input, const char* sep, T* result)
     // Detect malformed input by skipping " \t" and checking if the following
     // char is a space as determined by isspace.
     input += strspn(input, " \t");
-    if (isspace(*input))
+    if (isspace((unsigned char) *input))
         return 0;
     char* r;
     errno = 0;
@@ -214,7 +214,7 @@ const char* read(const char* input, const char* sep, float* result)
     // Detect malformed input by skipping " \t" and checking if the following
     // char is a space as determined by isspace.
     input += strspn(input, " \t");
-    if (isspace(*input))
+    if (isspace((unsigned char) *input))
         return 0;
     char* r;
     errno = 0;
@@ -232,7 +232,7 @@ const char* read(const char* input, const char* sep, double* result)
     // Detect malformed input by skipping " \t" and checking if the following
     // char is a space as determined by isspace.
     input += strspn(input, " \t");
-    if (isspace(*input))
+    if (isspace((unsigned char) *input))
         return 0;
     char* r;
     errno = 0;
@@ -250,7 +250,7 @@ const char* read(const char* input, const char* sep, long double* result)
     // Detect malformed input by skipping " \t" and checking if the following
     // char is a space as determined by isspace.
     input += strspn(input, " \t");
-    if (isspace(*input))
+    if (isspace((unsigned char) *input))
         return 0;
     char* r;
     errno = 0;
