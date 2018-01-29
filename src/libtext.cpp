@@ -208,7 +208,29 @@ const char* read(const char* input, const char* sep, int64_t* result)
     return readll(input, sep, result);
 }
 
-const char* read(const char* input, const char* sep, float* result)
+template <class T>
+static T str2f(const char* input, char** end);
+
+template <>
+float str2f<float>(const char* input, char** end)
+{
+    return strtof(input, end);
+}
+
+template <>
+double str2f<double>(const char* input, char** end)
+{
+    return strtod(input, end);
+}
+
+template <>
+long double str2f<long double>(const char* input, char** end)
+{
+    return strtold(input, end);
+}
+
+template <class T>
+static const char* readfloat(const char* input, const char* sep, T* result)
 {
     // strtoull skips leading space, \t, \n, \v, \f, \r.
     // Detect malformed input by skipping " \t" and checking if the following
@@ -218,48 +240,27 @@ const char* read(const char* input, const char* sep, float* result)
         return 0;
     char* r;
     errno = 0;
-    const float v = strtof(input, &r);
+    const T v = str2f<T>(input, &r);
     if (errno || r == input)
         return 0;
     if (result)
         *result = v;
     return next(r, sep);
+}
+
+const char* read(const char* input, const char* sep, float* result)
+{
+    return readfloat(input, sep, result);
 }
 
 const char* read(const char* input, const char* sep, double* result)
 {
-    // strtoull skips leading space, \t, \n, \v, \f, \r.
-    // Detect malformed input by skipping " \t" and checking if the following
-    // char is a space as determined by isspace.
-    input += strspn(input, " \t");
-    if (isspace((unsigned char) *input))
-        return 0;
-    char* r;
-    errno = 0;
-    const double v = strtod(input, &r);
-    if (errno || r == input)
-        return 0;
-    if (result)
-        *result = v;
-    return next(r, sep);
+    return readfloat(input, sep, result);
 }
 
 const char* read(const char* input, const char* sep, long double* result)
 {
-    // strtoull skips leading space, \t, \n, \v, \f, \r.
-    // Detect malformed input by skipping " \t" and checking if the following
-    // char is a space as determined by isspace.
-    input += strspn(input, " \t");
-    if (isspace((unsigned char) *input))
-        return 0;
-    char* r;
-    errno = 0;
-    const long double v = strtold(input, &r);
-    if (errno || r == input)
-        return 0;
-    if (result)
-        *result = v;
-    return next(r, sep);
+    return readfloat(input, sep, result);
 }
 
 const char* read(const char* input, const char* sep, int result)
