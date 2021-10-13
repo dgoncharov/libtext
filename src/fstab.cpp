@@ -1,7 +1,11 @@
 #include <libtext.h>
 #include <fstream>
 #include <vector>
+#ifdef have_string_view
+#include <string_view>
+#else
 #include <string>
+#endif
 #include <algorithm>
 #include <iostream>
 #include <stddef.h>
@@ -9,11 +13,17 @@
 #include <string.h>
 #include <errno.h>
 
+#ifdef have_string_view
+typedef std::string_view string;
+#else
+typedef std::string string;
+#endif
+
 struct fsent {
-    std::string fs_spec;
-    std::string fs_file;
-    std::string fs_type;
-    std::string fs_opts;
+    string fs_spec;
+    string fs_file;
+    string fs_type;
+    string fs_opts;
     int fs_freq;
     int fs_passno;
 };
