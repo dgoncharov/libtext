@@ -38,7 +38,15 @@ const char* read(const char* input, const char* sep, T result,  U... u)
     const char* s = read(input, sep, result);
     if (!s || !*s || *s == '\n')
         return 0; // The number of arguments exceeds the number of fields.
+#ifdef __cpp_fold_expressions
+    // Prefer fold expression over recursion, because
+    // 1. Recursion consumes more stack. Even when the tail call is optimized.
+    // 2. Recursive code generates more symbols.
+    ((s = read(s, sep, u)) && ...);
+    return s;
+#else
     return read(s, sep, u...);
+#endif
 }
 const char *nextline(const char* input);
 std::string oneline(const char* input);
