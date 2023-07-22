@@ -107,7 +107,7 @@ structure holding a copy of /etc/fstab contents.
 #include &lt;<A HREF="file:/usr/include/libtext.h">libtext.h</A>&gt;
 #include &lt;fstream&gt;
 #include &lt;vector&gt;
-#include &lt;string&gt;
+#include &lt;string_view&gt;
 #include &lt;algorithm&gt;
 #include &lt;iostream&gt;
 #include &lt;<A HREF="file:/usr/include/stddef.h">stddef.h</A>&gt;
@@ -116,10 +116,10 @@ structure holding a copy of /etc/fstab contents.
 #include &lt;<A HREF="file:/usr/include/errno.h">errno.h</A>&gt;
 
 struct fsent {
-    std::string fs_spec;
-    std::string fs_file;
-    std::string fs_type;
-    std::string fs_opts;
+    std::string_view fs_spec;
+    std::string_view fs_file;
+    std::string_view fs_type;
+    std::string_view fs_opts;
     int fs_freq;
     int fs_passno;
 };
@@ -221,6 +221,6 @@ Shell Command Language, read.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 00:06:30 GMT, January 15, 2018
+Time: 13:45:48 GMT, October 14, 2021
 </BODY>
 </HTML>
