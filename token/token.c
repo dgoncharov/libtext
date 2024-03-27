@@ -5,6 +5,7 @@
 
 static const char quotes_and_separators[] = "'\" \t\n";
 static const char *separators = quotes_and_separators + 2;
+static const char *next_token (const char **s, size_t *tokenlen, int *status);
 static char *dequote (char *s, size_t *slen);
 static char *quote_removal_in_double_quotes (char *s, size_t *slen);
 static char *quote_removal_in_single_quotes (char *s, size_t *slen);
@@ -16,46 +17,35 @@ static size_t memecspn (const char *s, const char *reject, size_t slen);
 static char *collapse_escaped_newlines (char *s, char *beg, const char **endp);
 
 
-/* Find, validate and dequote the first token.
+/* 's' is mutable, because next_dequoted_token dequotes the token in place.
+  An alternative interface would be to have next_dequoted_token allocate the
+  buffer on heap and return it.  That would require a malloc per token and
+  cause the caller to free each token.
+  Yet another interface would be to have next_dequoted_token take a buffer
+  from the caller, copy a token to the provided buffer and modify the token in
+  the buffer. Such interface requires next_dequoted_token to perform a memcpy
+  per token.  Also, such interface requires that the caller allocates a buffer
+  of sufficient size.  Since the caller does not know the length of a token,
+  the caller would have to allocate a buffer sufficient to hold the whole
+  input string. If a buffer sufficient to hold the whole string is allocated
+  anyway the caller can as well copy the input string to the buffer to relieve
+  next_dequoted_token from doing memcpy per token.
+  The current interface, on the other hand, does not force either malloc/free
+  or memcpy per token.
+  Another nice property of this mutable 's' is that it serves as a storage for
+  all dequoted tokens. This relieves the caller from keeping each token
+  somewhere individually.
+  For example, to populate an argv, the caller can copy the address of each
+  token to the related argv element.  The tokens themself stay in 's'.
 
-   If no token is found,
-     - Keep *STATUS intact.
-     - Point *S to the null terminator.
-     - Set *TOKENLEN to 0.
-     - Return 0.
-
-   Otherwise, if a not escaped opening quote is present in the first token, but
-   a corresponding closing quote is missing, then,
-     - Set *STATUS to 1.
-     - Point *S to the null terminator.
-     - Set *TOKENLEN to the length of first token.
-     - Return the beginning of the first token.
-
-   Otherwise,
-     - Keep *STATUS intact.
-     - Point *S to the beginning of the next token.
-     - Dequote S in place.
-     - Set *TOKENLEN to the length of the dequoted first token.
-     - Return the beginning of the first token.
-
-   Dequoting rules.
-   Outside of quotes
-       - remove each not escaped backslash.
-       - remove each backslash that escapes a backslash.
-       - replace backslash-newline pair with a space.
-   Within double quotes
-       - remove the opening and closing double quotes.
-       - remove each backslash escaping a backslash or double quote.
-       - replace each backslash-newline pair with a space.
-   Within single quotes.
-       - remove the opening and closing single quotes.
-
-   S is mutable, because next_dequoted_token dequotes the token in place.  */
+  while ((token = next_dequoted_token (&s, &len, &malformed)))
+    argv[argc++] = token;
+  argv[argc] = 0;  */
 char *
 next_dequoted_token (char **s, size_t *tokenlen, int *status)
 {
   int st = 0;
-  char *token = (char*) next_quoted_token ((const char **)s, tokenlen, &st);
+  char *token = (char*) next_token ((const char **)s, tokenlen, &st);
   *status |= st;
   if (token && st == 0)
     dequote (token, tokenlen);
@@ -76,19 +66,19 @@ next_dequoted_token (char **s, size_t *tokenlen, int *status)
    interleaving separators, are treated as one token.
    E.g. hello'world'of'many'tokens is treated as one token.  */
 
-/* Return the beginning of the first token in the specified string S.
-   Set *TOKENLEN to the length of the token.  The quotes that delimit a quoted
-   token are themself a part of the token and included to *TOKENLEN.
-   Set *S to the beginning of the next token.
-   If an opening quote is present and the closing quote is missing, set *STATUS
-   to 1.  Otherwise, keep *STATUS intact.
+/* Return the beginning of the first token in the specified string 's'.
+   Set '*tokenlen' to the length of the token.  The quotes that delimit a
+   quoted token are themself a part of the token and included to '*tokenlen'.
+   Set '*s' to the beginning of the next token.
+   If an opening quote is present and the closing quote is missing, set
+   '*status' to 1.  Otherwise, keep '*status' intact.
    If no token is found, return 0.
 
-   STATUS is a bitmask.
+   'status' is a bitmask.
    The current implementation only sets bit 0. However, it is possible to
-   modify next_quoted_token to detect $ or ` and set other bits in STATUS.  */
+   modify next_token to detect $ or ` and set other bits in 'status'.  */
 const char *
-next_quoted_token (const char **input, size_t *tokenlen, int *status)
+next_token (const char **input, size_t *tokenlen, int *status)
 {
   const char *token, *s;
 
@@ -100,7 +90,7 @@ next_quoted_token (const char **input, size_t *tokenlen, int *status)
     /* Only separators in this input.  */
     return 0;
 
-  /* Point TOKEN at the beginning of the token.  */
+  /* Point 'token' at the beginning of the token.  */
   token = s = *input;
 
   /* An escaped newline is not treated like some other escaped space.
@@ -143,7 +133,8 @@ next_quoted_token (const char **input, size_t *tokenlen, int *status)
         {
           /* Advance past the opening quote.  */
           ++s;
-          /* Skip until a not escaped double quote, which is the closing quote.  */
+          /* Skip until a not escaped double quote, which is the closing quote.
+           */
           s += strecspn (s, "\"");
           if (*s == '\0')
             {
@@ -165,21 +156,21 @@ next_quoted_token (const char **input, size_t *tokenlen, int *status)
       break;
     }
 
-  /* TOKEN points at the begininng of the token. S points immediately
+  /* 'token' points at the begininnig of the token. 's' points immediately
      after the end of the token.  */
   *tokenlen = s - token;
 
-  /* Move S to the beginning of the next token.  */
+  /* Move 's' to the beginning of the next token.  */
   s = skip_separators (s);
   *input = s;
 
   return token;
 }
 
-/* Dequote the initial portion of *SLEN characters of string S.
-   Store the lenght of the dequoted portion to *SLEN.
+/* Dequote the initial portion of '*slen' characters of string 's'.
+   Store the lenght of the dequoted portion to '*slen'.
    Null terminate the dequoted portion.
-   Return S.  */
+   Return 's'.  */
 static char *
 dequote (char *s, size_t *slen)
 {
@@ -204,16 +195,16 @@ dequote (char *s, size_t *slen)
         case '\\':
           if (s[1] == '\n')
             {
-              /* This backslash escapes the newline in S[1].  */
-              /* Remove the backslash and the newline.  */
+              /* This backslash escapes the newline in 's[1]'.
+                 Remove the backslash and the newline.  */
               memmove (s, s + 2, len - 2);
               end -= 2;
               break;
             }
           if (strchr ("'\"\\ \t", s[1]))
             {
-              /* This backslash escapes S[1].  */
-              /* Remove the backslash.  */
+              /* This backslash escapes 's[1]'.
+                 Remove the backslash.  */
               memmove (s, s + 1, len - 1);
               --end;
 
@@ -228,7 +219,7 @@ dequote (char *s, size_t *slen)
           --end;
           break;
         default:
-          /* Keep intact a regualar character.  */
+          /* Keep intact a regular character.  */
           ++s;
           break;
         }
@@ -241,19 +232,21 @@ dequote (char *s, size_t *slen)
   return beg;
 }
 
-/* Within substring [S, S + SLEN) remove the opening and closing single quotes.
+/* Within substring '[s, s + slen)' remove the opening and closing single
+   quotes.
 
-  Store the number of characters bewtween the end of the
+  Store the number of characters between the end of the
   token and the end of the substring, remaining after quote removal.
-  Return the end of the token.
- */
+  Return the end of the token.  */
 static char *
 quote_removal_in_single_quotes (char *s, size_t *slen)
 {
   const char *end = s + *slen;
   char *close;
 
-  assert (*slen > 1); /* Due to STATUS == 0.  */
+  /* These assertions are corrects, because next_dequoted_token calls dequote
+     only when the token is well formed.  */
+  assert (*slen > 1);
   assert (*s == '\'');
 
   close = (char*)  memchr (s + 1, '\'', *slen - 1);
@@ -273,18 +266,18 @@ quote_removal_in_single_quotes (char *s, size_t *slen)
   return close;
 }
 
-/* Within substring [S, S + SLEN)
- - Remove the opening and closing double quotes.
- - Remove each backslash which escapes a double quote or backslash.
- - Replace each group of consecutive backslash-newline pairs along with
+/* Within substring '[s, s + slen)'
+   Remove the opening and closing double quotes.
+   Remove each backslash which escapes a double quote or backslash.
+   Replace each group of consecutive backslash-newline pairs along with
    surrounding space with a single space.
 
-  Store the number of characters bewtween the end of the
-  token and the end of the substring, remaining after quote removal.
-  Return the end of the token.
+   Store the number of characters between the end of the token and the end of
+   the substring, remaining after quote removal.
+   Return the end of the token.
 
-  Because [S, S + SLEN) is one token, there is no need to care about single
-  quotes.  */
+   Because '[s, s + slen)' is one token, there is no need to care about single
+   quotes.  */
 static char *
 quote_removal_in_double_quotes (char *s, size_t *slen)
 {
@@ -292,7 +285,9 @@ quote_removal_in_double_quotes (char *s, size_t *slen)
   char *beg = s;
   const char *end = s + *slen;
 
-  assert (*slen > 1); /* Due to STATUS == 0.  */
+  /* These assertions are corrects, because next_dequoted_token calls dequote
+     only when the token is well formed.  */
+  assert (*slen > 1);
   assert (*s == '"');
 
   /* Remove the opening quote.  */
@@ -350,8 +345,8 @@ quote_removal_in_double_quotes (char *s, size_t *slen)
   return s;
 }
 
-/* Return 1 if C is a newline, space or tab.
-   Various shells, posix and gnu make do not honor form-feed, carriage return
+/* Return 1 if 'c' is a newline, space or tab.
+   Various shells, posix and GNU Make do not honor form-feed, carriage return
    or vertical tab as token delimiters, even though isspace returns true for
    those characters.  */
 static int
@@ -408,9 +403,9 @@ skip_until_separator (const char *s)
   return s;
 }
 
-/* Return the index of the first character in S that is present in REJECT and
-   not escaped with a backslash.
-   If backslash itself is present in REJECT, then nothing can be escaped,
+/* Return the index of the first character in 's' that is present in 'reject'
+   and not escaped with a backslash.
+   If backslash itself is present in 'reject', then nothing can be escaped,
    because lookup returns the index of that very backslash and strecspn behaves
    as strcspn.  */
 static size_t
@@ -441,15 +436,16 @@ strecspn (const char *s, const char *reject)
   return result;
 }
 
-/* Same as strecspn within the first SLEN characters of S.  */
+/* Same as strecspn within the first 'slen' characters of 's'.  */
 static size_t
 memecspn (const char *s, const char *reject, size_t slen)
 {
   size_t result;
   int n = 0;
   const char escape = '\\';
-  /* memchr along with RLEN, rather than strchr, is used to ensure
-     that a \0 in [S, S+SLEN) does not match the null terminator in REJECT.  */
+  /* memchr along with 'rlen', rather than strchr, is used to ensure
+     that a \0 in '[s, s+slen)' does not match the null terminator in 'reject'.
+   */
   size_t rlen = strlen (reject);
   const char *escape_rejected =
                          (char*) memchr (reject, (unsigned char) escape, rlen);
@@ -474,10 +470,10 @@ memecspn (const char *s, const char *reject, size_t slen)
   return result;
 }
 
-/* Within substring [BEG, *ENDP) replace all consecutive backslash-newline
-  pairs along with surrounding space with a single space.
-  Return the address immediately after the newly inserted space.
-  Store the new end of the substring in *ENDP.  */
+/* Within substring '[beg, *endp)' replace all consecutive backslash-newline
+   pairs along with surrounding space with a single space.
+   Return the address immediately after the newly inserted space.
+   Store the new end of the substring in '*endp'.  */
 static char *
 collapse_escaped_newlines (char *s, char *beg, const char **endp)
 {
@@ -491,7 +487,7 @@ collapse_escaped_newlines (char *s, char *beg, const char **endp)
   assert (s[1] == '\n');
 
   /* Convert all consecutive backslash-newline pairs along with
-   * surrouding space to a single space.  */
+     surrounding space to a single space.  */
 
   /* Walk back optional leading space.  */
   for (p = s - 1; beg < p && (*p == '\t' || *p == ' '); --p)
@@ -508,10 +504,10 @@ collapse_escaped_newlines (char *s, char *beg, const char **endp)
         ;
     }
 
-  /* P points at the beginning of the leading space.
-     S points immediately after trailing space and all consecutive
+  /* 'p' points at the beginning of the leading space.
+     's' points immediately after trailing space and all consecutive
      backslash-newline pairs.
-     Replace [P, S) with a single space.  */
+     Replace '[p, s)' with a single space.  */
   *p = ' ';
   ++p;
   memmove (p, s, end - s);

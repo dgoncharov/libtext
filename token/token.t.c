@@ -15,12 +15,12 @@ static void test_memecspn (int, const char *, const char *, size_t);
 static void test_memecspn_impl (int, const char *, size_t, const char *,
                                 size_t);
 static void test_strecspn (int, const char *, const char *, size_t);
-static void test_next_quoted_token (int, const char *, const char *, ...);
-static void test_next_quoted_token_ws (int, const char *, const char *, ...);
-static void test_next_quoted_token_ws_impl (int, const char *, const char *,
-                                            va_list, char);
-static void test_next_quoted_token_impl (int, const char *, const char *,
-                                         va_list, char, char);
+static void test_next_token (int, const char *, const char *, ...);
+static void test_next_token_ws (int, const char *, const char *, ...);
+static void test_next_token_ws_impl (int, const char *, const char *, va_list,
+                                     char);
+static void test_next_token_impl (int, const char *, const char *, va_list,
+                                  char, char);
 static void test_next_dequoted_token (int, const char *, const char *, ...);
 static void test_next_dequoted_token_ws (int, const char *, const char *, ...);
 static void test_next_dequoted_token_i (int, const char *, const char *, ...);
@@ -57,7 +57,7 @@ int main (int argc, char *argv[])
 /* Test the following functions
 memecspn
 strecspn
-next_quoted_token
+next_token
 next_dequoted_token
 
 These characters have special powers.
@@ -111,9 +111,7 @@ Test parsing and dequoting
   A backslash-newline pair is replaced with a space.
   A backslash immediately followed by any other character is left intact.
 
-  Missing closing quote.
-*/
-
+  Missing closing quote.  */
 static int
 test (long n, int argc, char *argv[])
 {
@@ -375,7 +373,7 @@ test (long n, int argc, char *argv[])
       /* No token. */
       /* Empty.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "", 0, 0);
+        test_next_token (__LINE__ - 1, "", 0, 0);
         if (n)
           break;
         /* Fall through */
@@ -387,7 +385,7 @@ test (long n, int argc, char *argv[])
 
       /* A lone separator.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, " ", 0, 0);
+        test_next_token (__LINE__ - 1, " ", 0, 0);
         if (n)
           break;
         /* Fall through */
@@ -399,7 +397,7 @@ test (long n, int argc, char *argv[])
 
       /* Multiple separators.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "   ", 0, 0);
+        test_next_token (__LINE__ - 1, "   ", 0, 0);
         if (n)
           break;
         /* Fall through */
@@ -411,7 +409,7 @@ test (long n, int argc, char *argv[])
 
       /* Multiple distinct separators.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, " \t\n  ", 0, 0);
+        test_next_token (__LINE__ - 1, " \t\n  ", 0, 0);
         if (n)
           break;
         /* Fall through */
@@ -421,7 +419,7 @@ test (long n, int argc, char *argv[])
           break;
         /* Fall through */
 
-      /* Test next_quoted_token and next_dequoted_token outside of quotes.
+      /* Test next_token and next_dequoted_token outside of quotes.
           end of token
             backslash immediately followed by the null terminator
             space immediately followed by the null terminator
@@ -439,8 +437,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash not escaping anything.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "hello\\world", "hello\\world", 0);
+        test_next_token (__LINE__ - 1, "hello\\world", "hello\\world", 0);
         if (n)
           break;
         /* Fall through */
@@ -453,7 +450,7 @@ test (long n, int argc, char *argv[])
 
       /* A not escaped backslash, followed by null terminator.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "\\", "\\", 0);
+        test_next_token (__LINE__ - 1, "\\", "\\", 0);
         if (n)
           break;
         /* Fall through */
@@ -465,7 +462,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash escapes backslash.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "\\\\", "\\\\", 0);
+        test_next_token (__LINE__ - 1, "\\\\", "\\\\", 0);
         if (n)
           break;
         /* Fall through */
@@ -477,7 +474,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash escapes newline.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "\\\n", 0, 0);
+        test_next_token (__LINE__ - 1, "\\\n", 0, 0);
         if (n)
           break;
         /* Fall through */
@@ -489,7 +486,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash escapes newline, followed by a token.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "\\\nhello", "hello", 0);
+        test_next_token (__LINE__ - 1, "\\\nhello", "hello", 0);
         if (n)
           break;
         /* Fall through */
@@ -501,7 +498,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash escapes newline, followed by a token.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "\\\n\\\nhello", "hello", 0);
+        test_next_token (__LINE__ - 1, "\\\n\\\nhello", "hello", 0);
         if (n)
           break;
         /* Fall through */
@@ -512,7 +509,7 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "\\\n \\\nhello", "hello", 0);
+        test_next_token (__LINE__ - 1, "\\\n \\\nhello", "hello", 0);
         if (n)
           break;
         /* Fall through */
@@ -523,8 +520,7 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                " hello, world", "hello,", "world", 0);
+        test_next_token (__LINE__ - 1, " hello, world", "hello,", "world", 0);
         if (n)
           break;
         /* Fall through */
@@ -537,7 +533,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash escapes space.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "\\ hello, world", "\\ hello,", "world", 0);
         if (n)
           break;
@@ -551,7 +547,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash escapes backslash.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "\\\\ hello, world", "\\\\", "hello,", "world", 0);
         if (n)
           break;
@@ -565,7 +561,7 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "\\\nhello\\\n \\\nworld\\\n", "hello", "world", 0);
         if (n)
           break;
@@ -579,9 +575,8 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                         "\\\n \\\nhello\\\n \\\nworld",
-                         "hello", "world", 0);
+        test_next_token (__LINE__ - 1,
+                         "\\\n \\\nhello\\\n \\\nworld", "hello", "world", 0);
         if (n)
           break;
         /* Fall through */
@@ -595,7 +590,7 @@ test (long n, int argc, char *argv[])
 
       /* A token, followed by a space  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "hello ", "hello", 0);
+        test_next_token (__LINE__ - 1, "hello ", "hello", 0);
         if (n)
           break;
         /* Fall through */
@@ -607,7 +602,7 @@ test (long n, int argc, char *argv[])
 
       /* A token, followed by a backslash escaping newline.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "hello\\\n", "hello", 0);
+        test_next_token (__LINE__ - 1, "hello\\\n", "hello", 0);
         if (n)
           break;
         /* Fall through */
@@ -618,9 +613,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       /* A token, followed by a backslash escaping backslash, followed by
-       * newline.  */
+         newline.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "hello\\\\\n", "hello\\\\", 0);
+        test_next_token (__LINE__ - 1, "hello\\\\\n", "hello\\\\", 0);
         if (n)
           break;
         /* Fall through */
@@ -632,7 +627,7 @@ test (long n, int argc, char *argv[])
 
       /* A lone escaped newline is not considered a token.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "hello\\\n \\\n", "hello", 0);
+        test_next_token (__LINE__ - 1, "hello\\\n \\\n", "hello", 0);
         if (n)
           break;
         /* Fall through */
@@ -644,8 +639,7 @@ test (long n, int argc, char *argv[])
 
       /* A lone escaped newline is not considered a token.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "hello\\\\\n \\\n", "hello\\\\", 0);
+        test_next_token (__LINE__ - 1, "hello\\\\\n \\\n", "hello\\\\", 0);
         if (n)
           break;
         /* Fall through */
@@ -658,7 +652,7 @@ test (long n, int argc, char *argv[])
 
       /* A token, followed by a backslash escaping backslash.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "hello\\\\", "hello\\\\", 0);
+        test_next_token (__LINE__ - 1, "hello\\\\", "hello\\\\", 0);
         if (n)
           break;
         /* Fall through */
@@ -670,7 +664,7 @@ test (long n, int argc, char *argv[])
 
       /* A lone escaped newline is not considered a token.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "hello\\\\ \\\n", "hello\\\\", 0);
+        test_next_token (__LINE__ - 1, "hello\\\\ \\\n", "hello\\\\", 0);
         if (n)
           break;
         /* Fall through */
@@ -682,7 +676,7 @@ test (long n, int argc, char *argv[])
 
       /* A lone escaped newline is not considered a token.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "hello\\ \\\n", "hello\\ ", 0);
+        test_next_token (__LINE__ - 1, "hello\\ \\\n", "hello\\ ", 0);
         if (n)
           break;
         /* Fall through */
@@ -693,10 +687,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       /* Backslash, followed by newline. Backslash-newline is replaced with a
-       * space. Two tokens.  */
+         space. Two tokens.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                         "hello,\\\nworld", "hello,", "world", 0);
+        test_next_token (__LINE__ - 1, "hello,\\\nworld", "hello,", "world", 0);
         if (n)
           break;
         /* Fall through */
@@ -708,9 +701,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       /* Backslash, escapes backslash, followed by newline. Backslash is
-       * removed and not escaped newline is removed. Two tokens.  */
+         removed and not escaped newline is removed. Two tokens.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "hello,\\\\\nworld", "hello,\\\\", "world", 0);
         if (n)
           break;
@@ -723,7 +716,7 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "hello,\\\\\\\nworld", "hello,\\\\", "world", 0);
         if (n)
           break;
@@ -738,8 +731,7 @@ test (long n, int argc, char *argv[])
 
       /* Two tokens.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "hello, world", "hello,", "world", 0);
+        test_next_token (__LINE__ - 1, "hello, world", "hello,", "world", 0);
         if (n)
           break;
         /* Fall through */
@@ -751,8 +743,7 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "hello, world\n", "hello,", "world", 0);
+        test_next_token (__LINE__ - 1, "hello, world\n", "hello,", "world", 0);
         if (n)
           break;
         /* Fall through */
@@ -765,8 +756,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash escapes space. Backslash removed, single token.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "hello,\\ world", "hello,\\ world", 0);
+        test_next_token (__LINE__ - 1, "hello,\\ world", "hello,\\ world", 0);
         if (n)
           break;
         /* Fall through */
@@ -778,9 +768,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       /* Backslash, followed by two spaces. Backslash removed, two tokens.
-       * First token contains the escaped space.  */
+         First token contains the escaped space.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "hello,\\  world", "hello,\\ ", "world", 0);
         if (n)
           break;
@@ -792,11 +782,11 @@ test (long n, int argc, char *argv[])
           break;
         /* Fall through */
 
-      /*Backslash escapes white space.  */
+      /* Backslash escapes white space.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "a\\ hello, world\\ b",
-                                "a\\ hello,", "world\\ b", 0);
+        test_next_token (__LINE__ - 1,
+                         "a\\ hello, world\\ b",
+                         "a\\ hello,", "world\\ b", 0);
         if (n)
           break;
         /* Fall through */
@@ -810,7 +800,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash escapes a quote.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "\\'", "\\'", 0);
+        test_next_token (__LINE__ - 1, "\\'", "\\'", 0);
         if (n)
           break;
         /* Fall through */
@@ -821,9 +811,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       /* Backslash escapes backslash, followed by a quote.
-       * Malformed token.  */
+         Malformed token.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "\\\\'", "\\\\'", 0);
+        test_next_token (__LINE__ - 1, "\\\\'", "\\\\'", 0);
         if (n)
           break;
         /* Fall through */
@@ -835,7 +825,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash escapes a quote.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "\\\\\\'", "\\\\\\'", 0);
+        test_next_token (__LINE__ - 1, "\\\\\\'", "\\\\\\'", 0);
         if (n)
           break;
         /* Fall through */
@@ -847,7 +837,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash escapes a quote.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "\\'hello", "\\'hello", 0);
+        test_next_token (__LINE__ - 1, "\\'hello", "\\'hello", 0);
         if (n)
           break;
         /* Fall through */
@@ -858,9 +848,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "a \\'hello, world\\' b",
-                                "a", "\\'hello,", "world\\'", "b", 0);
+        test_next_token (__LINE__ - 1,
+                         "a \\'hello, world\\' b",
+                         "a", "\\'hello,", "world\\'", "b", 0);
         if (n)
           break;
         /* Fall through */
@@ -873,9 +863,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "a 'hello one\" \"two world' b",
-                                "a", "'hello one\" \"two world'", "b", 0);
+        test_next_token (__LINE__ - 1,
+                         "a 'hello one\" \"two world' b",
+                         "a", "'hello one\" \"two world'", "b", 0);
         if (n)
           break;
         /* Fall through */
@@ -888,18 +878,16 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token_ws (__LINE__ - 1,
-                                   "a 'hello one\\' \\'two world' b",
-                                   "a", "'hello one\\'", "\\'two", "world' b",
-                                   0);
+        test_next_token_ws (__LINE__ - 1,
+                            "a 'hello one\\' \\'two world' b",
+                            "a", "'hello one\\'", "\\'two", "world' b", 0);
         if (n)
           break;
         /* Fall through */
       case __LINE__:
-        test_next_quoted_token_ws (__LINE__ - 1,
-                                   "a \"hello one\\\" \\\"two world\" b",
-                                   "a", "\"hello one\\\" \\\"two world\"", "b",
-                                   0);
+        test_next_token_ws (__LINE__ - 1,
+                            "a \"hello one\\\" \\\"two world\" b",
+                            "a", "\"hello one\\\" \\\"two world\"", "b", 0);
         if (n)
           break;
         /* Fall through */
@@ -930,9 +918,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       /* Backslash escapes backslash, followed by a quote.
-       * Malformed token.  */
+         Malformed token.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "\\\\'hello", "\\\\'hello", 0);
+        test_next_token (__LINE__ - 1, "\\\\'hello", "\\\\'hello", 0);
         if (n)
           break;
         /* Fall through */
@@ -944,8 +932,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash escapes a quote.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "\\\\\\'hello", "\\\\\\'hello", 0);
+        test_next_token (__LINE__ - 1, "\\\\\\'hello", "\\\\\\'hello", 0);
         if (n)
           break;
         /* Fall through */
@@ -957,7 +944,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash escapes a quote.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "hello\\'", "hello\\'", 0);
+        test_next_token (__LINE__ - 1, "hello\\'", "hello\\'", 0);
         if (n)
           break;
         /* Fall through */
@@ -968,9 +955,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       /* Backslash escapes backslash, followed by a quote.
-       * Malformed token.  */
+         Malformed token.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "hello\\\\'", "hello\\\\'", 0);
+        test_next_token (__LINE__ - 1, "hello\\\\'", "hello\\\\'", 0);
         if (n)
           break;
         /* Fall through */
@@ -982,8 +969,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash escapes a quote.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "hello\\\\\\'", "hello\\\\\\'", 0);
+        test_next_token (__LINE__ - 1, "hello\\\\\\'", "hello\\\\\\'", 0);
         if (n)
           break;
         /* Fall through */
@@ -995,8 +981,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash escapes a quote.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "hello\\'world", "hello\\'world", 0);
+        test_next_token (__LINE__ - 1, "hello\\'world", "hello\\'world", 0);
         if (n)
           break;
         /* Fall through */
@@ -1008,10 +993,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       /* Backslash escapes backslash, followed by a quote.
-       * Malformed token.  */
+         Malformed token.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "hello\\\\'world", "hello\\\\'world", 0);
+        test_next_token (__LINE__ - 1, "hello\\\\'world", "hello\\\\'world", 0);
         if (n)
           break;
         /* Fall through */
@@ -1024,7 +1008,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash escapes a quote.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "hello\\\\\\'world", "hello\\\\\\'world", 0);
         if (n)
           break;
@@ -1037,9 +1021,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       /* Backslash escapes backslash, followed by a quote.
-       * Malformed token.  */
+         Malformed token.  */
        case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "hello\\\\' world", "hello\\\\' world", 0);
         if (n)
           break;
@@ -1054,7 +1038,7 @@ test (long n, int argc, char *argv[])
 
       /* Quotes.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "''", "''", 0);
+        test_next_token (__LINE__ - 1, "''", "''", 0);
         if (n)
           break;
         /* Fall through */
@@ -1070,7 +1054,7 @@ test (long n, int argc, char *argv[])
       /* Malformed token. A quote immediately followed by the null terminator.
          Closing quote is missing.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "'", "'", 0);
+        test_next_token (__LINE__ - 1, "'", "'", 0);
         if (n)
           break;
         /* Fall through */
@@ -1083,7 +1067,7 @@ test (long n, int argc, char *argv[])
       /* Malformed token. A quote immediately followed by the null terminator.
          Closing quote is missing.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "'''", "'''", 0);
+        test_next_token (__LINE__ - 1, "'''", "'''", 0);
         if (n)
           break;
         /* Fall through */
@@ -1095,7 +1079,7 @@ test (long n, int argc, char *argv[])
 
       /* Malformed token. Leading separators are skipped.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, " '", "'", 0);
+        test_next_token (__LINE__ - 1, " '", "'", 0);
         if (n)
           break;
         /* Fall through */
@@ -1107,7 +1091,7 @@ test (long n, int argc, char *argv[])
 
       /* Malformed token. Trailing separators stay intact.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "' ", "' ", 0);
+        test_next_token (__LINE__ - 1, "' ", "' ", 0);
         if (n)
           break;
         /* Fall through */
@@ -1118,7 +1102,7 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "'  ", "'  ", 0);
+        test_next_token (__LINE__ - 1, "'  ", "'  ", 0);
         if (n)
           break;
         /* Fall through */
@@ -1130,7 +1114,7 @@ test (long n, int argc, char *argv[])
 
       /* Malformed token. Trailing separators stay intact.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "'\\\n", "'\\\n", 0);
+        test_next_token (__LINE__ - 1, "'\\\n", "'\\\n", 0);
         if (n)
           break;
         /* Fall through */
@@ -1142,7 +1126,7 @@ test (long n, int argc, char *argv[])
 
       /* Even number of quotes.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "''''", "''''", 0);
+        test_next_token (__LINE__ - 1, "''''", "''''", 0);
         if (n)
           break;
         /* Fall through */
@@ -1154,8 +1138,7 @@ test (long n, int argc, char *argv[])
 
       /* A wellformed token in quotes.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "'hello, world'", "'hello, world'", 0);
+        test_next_token (__LINE__ - 1, "'hello, world'", "'hello, world'", 0);
         if (n)
           break;
         /* Fall through */
@@ -1168,8 +1151,7 @@ test (long n, int argc, char *argv[])
 
       /* Missing closing quote.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "'hello, world", "'hello, world", 0);
+        test_next_token (__LINE__ - 1, "'hello, world", "'hello, world", 0);
         if (n)
           break;
         /* Fall through */
@@ -1182,8 +1164,7 @@ test (long n, int argc, char *argv[])
 
       /* Missing opening quote.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "hello, world'", "hello,", "world'", 0);
+        test_next_token (__LINE__ - 1, "hello, world'", "hello,", "world'", 0);
         if (n)
           break;
         /* Fall through */
@@ -1198,7 +1179,7 @@ test (long n, int argc, char *argv[])
       /* Backslash in single or double quotes does not escape a space or tab.
          It is simply a lone backslash and it stays.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "'hello,\\ world'", "'hello,\\ world'", 0);
         if (n)
           break;
@@ -1213,7 +1194,7 @@ test (long n, int argc, char *argv[])
       /* Backslash in single quotes does not escape a newline.  It is simply a
          lone backslash and it stays.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "'hello,\\\nworld'", "'hello,\\\nworld'", 0);
         if (n)
           break;
@@ -1226,9 +1207,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       /* Backslash in double quotes escapes a newline. A backslash newline pair
-         is replaced with a space.   */
+         is replaced with a space.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "\"hello,\\\nworld\"", "\"hello,\\\nworld\"", 0);
         if (n)
           break;
@@ -1241,9 +1222,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       /* Multiple consecutive backslash newline pairs along with leading and
-       * trailng space are all replaced with a single space .  */
+         trailng space are all replaced with a single space .  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "\"hello, \t \\\n \t \\\n\t \t\\\n  \t\tworld\"",
                          "\"hello, \t \\\n \t \\\n\t \t\\\n  \t\tworld\"", 0);
         if (n)
@@ -1258,8 +1239,7 @@ test (long n, int argc, char *argv[])
           break;
         /* Fall through */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                         "\"a\\\nb\\\nc\"", "\"a\\\nb\\\nc\"", 0);
+        test_next_token (__LINE__ - 1, "\"a\\\nb\\\nc\"", "\"a\\\nb\\\nc\"", 0);
         if (n)
           break;
         /* Fall through */
@@ -1271,7 +1251,7 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "\"hello, \t \\\n \t \\\n\t \t\\\n  \t\tworld "
                          " bye,\\\n \t \\\n \t \\\n \t   \\\n  \\\nmoon\"",
                          "\"hello, \t \\\n \t \\\n\t \t\\\n  \t\tworld "
@@ -1291,9 +1271,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       /* Backslash in double quotes escapes a backslash.
-       * Backslash in single quotes has no special powers at all.  */
+         Backslash in single quotes has no special powers at all.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "'hello,\\\\ world'", "'hello,\\\\ world'", 0);
         if (n)
           break;
@@ -1316,7 +1296,7 @@ test (long n, int argc, char *argv[])
       /* The backslash does not escape the quote and this string is split into
          a wellformed token and a malformed token.*/
       case __LINE__:
-        test_next_quoted_token_ws (__LINE__ - 1,
+        test_next_token_ws (__LINE__ - 1,
                             "'hello,\\' world'", "'hello,\\'", "world'", 0);
         if (n)
           break;
@@ -1331,7 +1311,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash in double quotes escapes a double quote. */
       case __LINE__:
-        test_next_quoted_token_ws (__LINE__ - 1,
+        test_next_token_ws (__LINE__ - 1,
                             "\"hello,\\\" world\"", "\"hello,\\\" world\"", 0);
         if (n)
           break;
@@ -1348,9 +1328,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       /* Backslash in double quotes escapes a double quote, which leaves a
-       * dangling closing quote and makes a malformed second token.  */
+         dangling closing quote and makes a malformed second token.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "\"hello,\\\\\" world\"",
                          "\"hello,\\\\\"", "world\"", 0);
         if (n)
@@ -1369,7 +1349,7 @@ test (long n, int argc, char *argv[])
 
       /* Backslash in double quotes escapes a double quote. */
       case __LINE__:
-        test_next_quoted_token_ws (__LINE__ - 1,
+        test_next_token_ws (__LINE__ - 1,
                             "\"hello,\\\\\\\" world\"",
                             "\"hello,\\\\\\\" world\"", 0);
         if (n)
@@ -1387,7 +1367,7 @@ test (long n, int argc, char *argv[])
          space, each not escaped backslash is removed and each backslash that
          escapes a backslash is removed.  */
       case __LINE__:
-        test_next_quoted_token_ws (__LINE__ - 1,
+        test_next_token_ws (__LINE__ - 1,
                             "one\\\\two\\ tree\\\" four\\\nfive",
                             "one\\\\two\\ tree\\\"", "four", "five", 0);
         if (n)
@@ -1406,7 +1386,7 @@ test (long n, int argc, char *argv[])
          double quote is removed, a backslash-newline pair is replaced with a
          space and other backslashes stay.  */
       case __LINE__:
-        test_next_quoted_token_ws (__LINE__ - 1,
+        test_next_token_ws (__LINE__ - 1,
                             "\"one\\\\two\\ tree\\\" four\\\nfive\"",
                             "\"one\\\\two\\ tree\\\" four\\\nfive\"", 0);
         if (n)
@@ -1423,7 +1403,7 @@ test (long n, int argc, char *argv[])
       /* Test that within single quotes only the opening and closing quotes are
          removed.  */
       case __LINE__:
-        test_next_quoted_token_ws (__LINE__ - 1,
+        test_next_token_ws (__LINE__ - 1,
                             "'one\\\\two\\ tree\\\" four\\\nfive'",
                             "'one\\\\two\\ tree\\\" four\\\nfive'", 0);
         if (n)
@@ -1439,7 +1419,7 @@ test (long n, int argc, char *argv[])
 
       /* Quotes within qoutes.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "'hello, \"one two\" world'",
                          "'hello, \"one two\" world'", 0);
         if (n)
@@ -1454,10 +1434,10 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "a 'hello one\\\\' \\\\'two world' b",
-                                "a", "'hello one\\\\'", "\\\\'two world'", "b",
-                                0);
+        test_next_token (__LINE__ - 1,
+                         "a 'hello one\\\\' \\\\'two world' b",
+                         "a", "'hello one\\\\'", "\\\\'two world'", "b",
+                         0);
         if (n)
           break;
         /* Fall through */
@@ -1480,10 +1460,10 @@ test (long n, int argc, char *argv[])
 
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "a 'hello one\\\\\\\\' \\\\\\\\'two world' b",
-                                "a", "'hello one\\\\\\\\'",
-                                "\\\\\\\\'two world'", "b", 0);
+        test_next_token (__LINE__ - 1,
+                         "a 'hello one\\\\\\\\' \\\\\\\\'two world' b",
+                         "a", "'hello one\\\\\\\\'",
+                         "\\\\\\\\'two world'", "b", 0);
         if (n)
           break;
         /* Fall through */
@@ -1508,9 +1488,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "'a \"one 'cd' two\" b'",
-                                "'a \"one 'cd' two\" b'", 0);
+        test_next_token (__LINE__ - 1,
+                         "'a \"one 'cd' two\" b'",
+                         "'a \"one 'cd' two\" b'", 0);
         if (n)
           break;
         /* Fall through */
@@ -1523,9 +1503,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "'a \"one 'c d' two\" b'",
-                                "'a \"one 'c", "d' two\" b'", 0);
+        test_next_token (__LINE__ - 1,
+                         "'a \"one 'c d' two\" b'",
+                         "'a \"one 'c", "d' two\" b'", 0);
         if (n)
           break;
         /* Fall through */
@@ -1538,9 +1518,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "a 'hell\"o''w\"orld' b",
-                                "a", "'hell\"o''w\"orld'", "b", 0);
+        test_next_token (__LINE__ - 1,
+                         "a 'hell\"o''w\"orld' b",
+                         "a", "'hell\"o''w\"orld'", "b", 0);
         if (n)
           break;
         /* Fall through */
@@ -1553,9 +1533,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "a \\'hell\"o\\'\\'w\"orld\\' b",
-                                "a", "\\'hell\"o\\'\\'w\"orld\\'", "b", 0);
+        test_next_token (__LINE__ - 1,
+                         "a \\'hell\"o\\'\\'w\"orld\\' b",
+                         "a", "\\'hell\"o\\'\\'w\"orld\\'", "b", 0);
         if (n)
           break;
         /* Fall through */
@@ -1568,9 +1548,9 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "\\'a \"one 'cd' two\" \\'b",
-                                "\\'a", "\"one 'cd' two\"", "\\'b", 0);
+        test_next_token (__LINE__ - 1,
+                         "\\'a \"one 'cd' two\" \\'b",
+                         "\\'a", "\"one 'cd' two\"", "\\'b", 0);
         if (n)
           break;
         /* Fall through */
@@ -1584,8 +1564,8 @@ test (long n, int argc, char *argv[])
 
       /* Trailing separator.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "'hello, world' ", "'hello, world'", 0);
+        test_next_token (__LINE__ - 1,
+                         "'hello, world' ", "'hello, world'", 0);
         if (n)
           break;
         /* Fall through */
@@ -1598,7 +1578,7 @@ test (long n, int argc, char *argv[])
 
       /* Trailing escaped separator.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "'hello'\\ ", "'hello'\\ ", 0);
+        test_next_token (__LINE__ - 1, "'hello'\\ ", "'hello'\\ ", 0);
         if (n)
           break;
         /* Fall through */
@@ -1614,7 +1594,7 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "'hello, world'\\ ", "'hello, world'\\ ", 0);
         if (n)
           break;
@@ -1634,7 +1614,7 @@ test (long n, int argc, char *argv[])
 
       /* A malformed token.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "'a'b'c", "'a'b'c", 0);
+        test_next_token (__LINE__ - 1, "'a'b'c", "'a'b'c", 0);
         if (n)
           break;
         /* Fall through */
@@ -1646,7 +1626,7 @@ test (long n, int argc, char *argv[])
 
       /* Multiple adjacent quoted tokens are treated as one.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "'a'b'c'", "'a'b'c'", 0);
+        test_next_token (__LINE__ - 1, "'a'b'c'", "'a'b'c'", 0);
         if (n)
           break;
         /* Fall through */
@@ -1658,7 +1638,7 @@ test (long n, int argc, char *argv[])
 
       /* A malformed token ajacent to a good one.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "a'b'c'd", "a'b'c'd", 0);
+        test_next_token (__LINE__ - 1, "a'b'c'd", "a'b'c'd", 0);
         if (n)
           break;
         /* Fall through */
@@ -1670,7 +1650,7 @@ test (long n, int argc, char *argv[])
 
       /* Multiple adjacent quoted tokens are treated as one.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "a'b'c'd'", "a'b'c'd'", 0);
+        test_next_token (__LINE__ - 1, "a'b'c'd'", "a'b'c'd'", 0);
         if (n)
           break;
         /* Fall through */
@@ -1681,7 +1661,7 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "'\\\\'abc''", "'\\\\'abc''", 0);
+        test_next_token (__LINE__ - 1, "'\\\\'abc''", "'\\\\'abc''", 0);
         if (n)
           break;
         /* Fall through */
@@ -1691,25 +1671,26 @@ test (long n, int argc, char *argv[])
           break;
         /* Fall through */
       case __LINE__:
-        test_next_dequoted_token_ws (__LINE__ - 1, "\"\\\\\"abc\"\"", "\\abc", 0);
+        test_next_dequoted_token_ws (__LINE__ - 1,
+                                     "\"\\\\\"abc\"\"", "\\abc", 0);
         if (n)
           break;
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1, "'\\'\\''", "'\\'\\''", 0);
+        test_next_token (__LINE__ - 1, "'\\'\\''", "'\\'\\''", 0);
         if (n)
           break;
         /* Fall through */
       /* A malformed token. Backslash has no special powers within single
-       * quotes.  */
+         quotes.  */
       case __LINE__:
         test_next_dequoted_token_ws (__LINE__ - 1, "'\\'\\''", "'\\'\\''", 0);
         if (n)
           break;
         /* Fall through */
       /* A wellformed token. A backslash escapes a double quote within double
-       * quotes.  */
+         quotes.  */
       case __LINE__:
         test_next_dequoted_token_ws (__LINE__ - 1, "\"\\\"\\\"\"", "\"\"", 0);
         if (n)
@@ -1717,21 +1698,20 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
-                                "'\\\\'\\\\''", "'\\\\'\\\\''", 0);
+        test_next_token (__LINE__ - 1, "'\\\\'\\\\''", "'\\\\'\\\\''", 0);
         if (n)
           break;
         /* Fall through */
       /* A wellformed token. Backslash has no special powers within single
-       * quotes. The third backslash is outside single quotes and it escapes
-       * the following (forth) backslash.  */
+         quotes. The third backslash is outside single quotes and it escapes
+         the following (forth) backslash.  */
       case __LINE__:
         test_next_dequoted_token_ws (__LINE__ - 1, "'\\\\'\\\\''", "\\\\\\", 0);
         if (n)
           break;
         /* Fall through */
       /* A wellformed token. A backslash escapes a backslash within double
-       * quotes.  */
+         quotes.  */
       case __LINE__:
         test_next_dequoted_token_ws (__LINE__ - 1,
                                      "\"\\\\\"\\\\\"\"", "\\\\", 0);
@@ -1740,7 +1720,7 @@ test (long n, int argc, char *argv[])
         /* Fall through */
 
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "  a  '  b  '  c  '  d  '  ",
                          "a",  "'  b  '",  "c",  "'  d  '" , 0);
         if (n)
@@ -1756,7 +1736,7 @@ test (long n, int argc, char *argv[])
 
       /* Multiple adjacent quoted tokens are treated as one.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "'hello'world\\'12''", "'hello'world\\'12''", 0);
         if (n)
           break;
@@ -1770,7 +1750,7 @@ test (long n, int argc, char *argv[])
 
       /* Multiple adjacent quoted tokens are treated as one.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
                          "01'2 3'45\"67 89\"ab\\ cd",
                          "01'2 3'45\"67 89\"ab\\ cd", 0);
         if (n)
@@ -1786,7 +1766,7 @@ test (long n, int argc, char *argv[])
 
       /* An example from gnu make test suite.  */
       case __LINE__:
-        test_next_quoted_token (__LINE__ - 1,
+        test_next_token (__LINE__ - 1,
             "-w -E 'use warnings FATAL => \"all\";' -E",
             "-w", "-E", "'use warnings FATAL => \"all\";'", "-E", 0);
         if (n)
@@ -1815,8 +1795,7 @@ test (long n, int argc, char *argv[])
           input[1024 * 65 * 4 - 1] = '\0';
           result = strdup_ (input);
           result[1024 * 65 * 2 - 1] = '\0';
-          test_next_quoted_token (__LINE__,
-                                  input, result, result + 1024 * 65 * 2, 0);
+          test_next_token (__LINE__, input, result, result + 1024 * 65 * 2, 0);
           free (result);
           free (input);
           if (n)
@@ -1897,11 +1876,11 @@ test_strecspn (int line, const char *s, const char *reject, size_t expected)
           s, reject, expected, r, line);
 }
 
-/* Test next_quoted_token with the specified INPUT, as well as modified INPUT
-   where each single quote is replaced with a double quote and each space is
-   replaced with a tab and a newline.  */
+/* Test next_token with the specified 'input', as well as modified
+   'input' where each single quote is replaced with a double quote and each
+   space is replaced with a tab and a newline.  */
 static void
-test_next_quoted_token (int line, const char *input, const char *expected, ...)
+test_next_token (int line, const char *input, const char *expected, ...)
 {
   const char *q;
   char *in;
@@ -1914,30 +1893,29 @@ test_next_quoted_token (int line, const char *input, const char *expected, ...)
       if ('\'' == *q || strcmp (in, input))
         {
           va_start (ap, expected);
-          test_next_quoted_token_ws_impl (line, in, expected, ap, *q);
+          test_next_token_ws_impl (line, in, expected, ap, *q);
           va_end (ap);
         }
       free (in);
     }
 }
 
-/* Test next_quoted_token with the specified INPUT, as well as modified INPUT
-   where each space is replaced with a tab and a newline.  */
+/* Test next_token with the specified 'input', as well as modified
+   'input' where each space is replaced with a tab and a newline.  */
 static void
-test_next_quoted_token_ws (int line, const char *input, const char *expected,
-                           ...)
+test_next_token_ws (int line, const char *input, const char *expected, ...)
 {
   va_list ap;
   va_start (ap, expected);
-  test_next_quoted_token_ws_impl (line, input, expected, ap, '\'');
+  test_next_token_ws_impl (line, input, expected, ap, '\'');
   va_end (ap);
 }
 
-/* Test next_quoted_token with the specified INPUT, as well as modified INPUT
-   where each space is replaced with a tab and a newline.  */
+/* Test next_token with the specified 'input', as well as modified
+   'input' where each space is replaced with a tab and a newline.  */
 static void
-test_next_quoted_token_ws_impl (int line, const char *input,
-                                const char *expected, va_list ap, char c)
+test_next_token_ws_impl (int line, const char *input, const char *expected,
+                         va_list ap, char c)
 {
   const char *w;
   char *in;
@@ -1946,7 +1924,7 @@ test_next_quoted_token_ws_impl (int line, const char *input,
   for (w = separators; *w; ++w)
     {
       /* An escaped space and and escaped newline are handled
-       * differently. */
+         differently. */
       if (strstr (input, "\\ ") && *w == '\n')
         continue;
       in = strdup_ (input);
@@ -1955,7 +1933,7 @@ test_next_quoted_token_ws_impl (int line, const char *input,
       if (' ' == *w || strcmp (in, input))
         {
           va_copy (aq, ap);
-          test_next_quoted_token_impl (line, in, expected, aq, c, *w);
+          test_next_token_impl (line, in, expected, aq, c, *w);
           va_end (aq);
         }
       free (in);
@@ -1963,7 +1941,7 @@ test_next_quoted_token_ws_impl (int line, const char *input,
 }
 
 static void
-test_next_quoted_token_impl (int line, const char *input, const char *expected,
+test_next_token_impl (int line, const char *input, const char *expected,
                       va_list ap, char c, char c2)
 {
   const char *s = input, *t;
@@ -1974,7 +1952,7 @@ test_next_quoted_token_impl (int line, const char *input, const char *expected,
   do
     {
       elen = expected ? strlen (expected) : 0;
-      t = next_quoted_token (&s, &tlen, &status);
+      t = next_token (&s, &tlen, &status);
       ASSERT (tlen == elen,
               "strlen (expected) = %lu, tlen = %lu, line = %d\n",
               elen, tlen, line);
@@ -1983,7 +1961,7 @@ test_next_quoted_token_impl (int line, const char *input, const char *expected,
         {
           char *e;
           /* An escaped space and and escaped newline are handled
-           * differently. */
+             differently. */
           if (strstr (expected, "\\ ") && c2 == '\n')
             continue;
           e = strdup_ (expected);
@@ -2000,19 +1978,18 @@ test_next_quoted_token_impl (int line, const char *input, const char *expected,
                 input, expected ? "" : "0", (int) tlen, t, line);
       expected = va_arg (ap, const char *);
     } while (expected);
-    /* After went through all expected tokens, next next_quoted_token call should
-       return 0.
-       This tests that all calls of test_next_quoted_token pass all expected
-       tokens. */
-    t = next_quoted_token (&s, &tlen, &status);
+    /* After went through all expected tokens, next next_token call
+       should return 0.  This tests that all calls of test_next_token pass all
+       expected tokens.  */
+    t = next_token (&s, &tlen, &status);
     ASSERT (t == 0,
             "input = '%s', result = '%.*s', line = %d\n",
             input, (int) tlen, t, line);
 }
 
-/* Test next_dequoted_token with the specified INPUT, as well as modified INPUT
-   where each single quote is replaced with a double quote and each space is
-   replaced with a tab and a newline.  */
+/* Test next_dequoted_token with the specified 'input', as well as modified
+   'input' where each single quote is replaced with a double quote and each
+   space is replaced with a tab and a newline.  */
 static void
 test_next_dequoted_token (int line, const char *input,
                           const char *expected, ...)
@@ -2035,8 +2012,8 @@ test_next_dequoted_token (int line, const char *input,
     }
 }
 
-/* Test next_dequoted_token with the specified INPUT, as well as modified INPUT
-   where each space is replaced with a tab and a newline.  */
+/* Test next_dequoted_token with the specified 'input', as well as modified
+   'input' where each space is replaced with a tab and a newline.  */
 static void
 test_next_dequoted_token_ws (int line, const char *input,
                              const char *expected, ...)
@@ -2047,8 +2024,8 @@ test_next_dequoted_token_ws (int line, const char *input,
   va_end (ap);
 }
 
-/* Test next_dequoted_token with the specified INPUT. Make no modifications to
-   INPUT.  */
+/* Test next_dequoted_token with the specified 'input'. Make no modifications
+   to 'input'.  */
 static void
 test_next_dequoted_token_i (int line, const char *input,
                             const char *expected, ...)
@@ -2059,8 +2036,9 @@ test_next_dequoted_token_i (int line, const char *input,
   va_end (ap);
 }
 
-/* Test next_dequoted_token with the specified INPUT, as well as modified INPUT
-   where each space is replaced with each character from the specified WS.  */
+/* Test next_dequoted_token with the specified 'input', as well as modified
+   'input' where each space is replaced with each character from the specified
+   'ws'.  */
 static void
 test_next_dequoted_token_ws_impl (int line, const char *input,
                                   const char *expected, va_list ap,
@@ -2073,7 +2051,7 @@ test_next_dequoted_token_ws_impl (int line, const char *input,
   for (w = separators; *w; ++w)
     {
       /* An escaped space and and escaped newline are handled
-       * differently. */
+         differently. */
       if (strstr (input, "\\ ") && *w == '\n')
         continue;
 
@@ -2090,7 +2068,7 @@ test_next_dequoted_token_ws_impl (int line, const char *input,
     }
 }
 
-/* Test next_dequoted_token with the specified INPUT.  */
+/* Test next_dequoted_token with the specified 'input'.  */
 static void
 test_next_dequoted_token_impl (int line, const char *input,
                                const char *expected, va_list ap, char c,
@@ -2143,7 +2121,7 @@ strdup_ (const char *s)
   return r;
 }
 
-/* Substitute all instances of X in INPUT with Y.  */
+/* Substitute all instances of 'x' in 'input' with 'y'.  */
 static char *
 subchr (char *input, char x, char y)
 {
@@ -2153,8 +2131,8 @@ subchr (char *input, char x, char y)
   return input;
 }
 
-/* Substitute all instances of X in INPUT with Y.
-   Substitute all instances of Y in INPUT with X.  */
+/* Substitute all instances of 'x' in 'input' with 'y'.
+   Substitute all instances of 'y' in 'input' with 'x'.  */
 static char *
 swapchr (char *input, char x, char y)
 {
