@@ -77,7 +77,7 @@ next_dequoted_token (char **s, size_t *tokenlen, int *status)
    'status' is a bitmask.
    The current implementation only sets bit 0. However, it is possible to
    modify next_token to detect $ or ` and set other bits in 'status'.  */
-const char *
+static const char *
 next_token (const char **input, size_t *tokenlen, int *status)
 {
   const char *token, *s;
