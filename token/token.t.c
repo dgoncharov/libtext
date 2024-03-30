@@ -50,7 +50,7 @@ int main (int argc, char *argv[])
     }
   test (n, argc, argv);
   fprintf (test_status > 0 ? stderr : stdout,
-           "%d tests passed, %d tests failed\n", test_npassed, test_nfailed);
+           "%d failed tests, %d total tests\n", test_nfailed, test_ntotal);
   return test_status;
 }
 
