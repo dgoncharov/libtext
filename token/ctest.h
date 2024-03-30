@@ -54,18 +54,13 @@ the working copy of ctest.h.  */
 #include <stdarg.h>
 #include <stdlib.h>
 
-static int vprint(const char* fmt, ...)
+static void vprint(const char* fmt, ...)
 {
-    char buf[1024] = {0};
     va_list ap;
+
     va_start(ap, fmt);
-    const int n = vsnprintf(buf, sizeof buf, fmt, ap);
+    vfprintf(stderr, fmt, ap);
     va_end(ap);
-    if (n > -1 && n < (int) sizeof buf)
-        return fprintf(stderr, "%s", buf);
-    errno = EINVAL;
-    fprintf(stderr, "ASSERT buffer overflow\n");
-    return -1;
 }
 
 #define HEAD(x, ...) (x)
