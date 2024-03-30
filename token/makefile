@@ -51,7 +51,12 @@ argv.tsk: argv.o libtoken.so
 # The options are gcc specific.
 # The expected format of the generated .d files is the one used by gcc.
 all_cppflags:=-I$(srcdir) $(CPPFLAGS)
-all_cflags:=-pipe -Wall -Wextra -Wfatal-errors -ggdb -O0 -m$(BITNESS)\
+all_cflags:=-pipe -Wall -Wextra -Wfatal-errors\
+  -Wwrite-strings -Wshadow\
+  -Wdeclaration-after-statement -Wbad-function-cast -Wformat-security\
+  -Wtype-limits -Wunused-but-set-parameter -Wlogical-op -Wpointer-arith\
+  -Wignored-qualifiers -Wformat-signedness -Wduplicated-cond\
+  -ggdb -O0 -m$(BITNESS)\
   -fno-default-inline\
   -fno-omit-frame-pointer\
   -fno-common\
