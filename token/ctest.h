@@ -75,11 +75,11 @@ static void vprint(const char* fmt, ...)
                                                         HEADLESS(__VA_ARGS__))
 
 static int test_status = 0;
-static int test_npassed = 0;
+static int test_ntotal = 0;
 static int test_nfailed = 0;
 #define ASSERT(...)\
 do {\
-    ++test_npassed;\
+    ++test_ntotal;\
     if (!(HEAD(__VA_ARGS__))) {\
         ++test_nfailed;\
         if (test_status < 64)\
