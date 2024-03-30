@@ -1857,8 +1857,10 @@ static void
 test_memecspn_impl (int line, const char *s, size_t slen, const char *reject,
                     size_t expected)
 {
+  size_t r;
+
   printf ("test %d\n", line);
-  size_t r = memecspn (s, reject, slen);
+  r = memecspn (s, reject, slen);
   ASSERT (r == expected,
           "input = \"%s\", reject = \"%s\", expected = %lu, result = %lu, "
           "line = %d\n",
@@ -1868,8 +1870,10 @@ test_memecspn_impl (int line, const char *s, size_t slen, const char *reject,
 static void
 test_strecspn (int line, const char *s, const char *reject, size_t expected)
 {
+  size_t r;
+
   printf ("test %d\n", line);
-  size_t r = strecspn (s, reject);
+  r = strecspn (s, reject);
   ASSERT (r == expected,
           "input = \"%s\", reject = \"%s\", expected = %lu, result = %lu, "
           "line = %d\n",
