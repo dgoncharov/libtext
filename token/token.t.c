@@ -36,6 +36,12 @@ static char *swapchr (char *input, char x, char y);
 int main (int argc, char *argv[])
 {
   long n = 0;
+
+  /* Disable buffering of stdout to have stdout and stderr output synchronized
+     in the log file.  */
+  n = setvbuf (stdout, NULL, _IONBF, 0);
+  ASSERT (n == 0, "n = %ld, line = %d\n", n, __LINE__);
+
   if (argc >= 2)
     {
       /* Run the specified test.  */
@@ -48,6 +54,7 @@ int main (int argc, char *argv[])
           return 1;
         }
     }
+  test_nfailed = test_ntotal = 0;
   test (n, argc, argv);
   fprintf (test_status > 0 ? stderr : stdout,
            "%d failed tests, %d total tests\n", test_nfailed, test_ntotal);
@@ -1859,7 +1866,7 @@ test_memecspn_impl (int line, const char *s, size_t slen, const char *reject,
 {
   size_t r;
 
-  printf ("test %d\n", line);
+  printf ("token test %d\n", line);
   r = memecspn (s, reject, slen);
   ASSERT (r == expected,
           "input = \"%s\", reject = \"%s\", expected = %lu, result = %lu, "
@@ -1872,7 +1879,7 @@ test_strecspn (int line, const char *s, const char *reject, size_t expected)
 {
   size_t r;
 
-  printf ("test %d\n", line);
+  printf ("token test %d\n", line);
   r = strecspn (s, reject);
   ASSERT (r == expected,
           "input = \"%s\", reject = \"%s\", expected = %lu, result = %lu, "
@@ -1952,7 +1959,7 @@ test_next_token_impl (int line, const char *input, const char *expected,
   size_t tlen, elen;
   int status = 0;
 
-  printf ("test %d\n", line);
+  printf ("token test %d\n", line);
   do
     {
       elen = expected ? strlen (expected) : 0;
@@ -2082,7 +2089,7 @@ test_next_dequoted_token_impl (int line, const char *input,
   size_t tlen, elen;
   int status = 0;
 
-  printf ("test %d\n", line);
+  printf ("token test %d\n", line);
 
   beg = s = strdup_ (input);
   do
