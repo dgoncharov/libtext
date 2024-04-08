@@ -50,18 +50,6 @@ To invoke ASSERT from multiple threads test_status can be made an atomic int in
 the working copy of ctest.h.  */
 
 #include <stdio.h>
-#include <errno.h>
-#include <stdarg.h>
-#include <stdlib.h>
-
-static void vprint(const char* fmt, ...)
-{
-    va_list ap;
-
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    va_end(ap);
-}
 
 #define HEAD(x, ...) (x)
 #define SHEAD(x, ...) #x
@@ -69,7 +57,7 @@ static void vprint(const char* fmt, ...)
 /* CALL is needed to have HEADLESS expanded before Px is expanded.  */
 #define CALL(Px, ...) Px(__VA_ARGS__)
 #define P0() fprintf(stderr, "\n")
-#define P1(...) vprint(__VA_ARGS__)
+#define P1(...) fprintf(stderr, __VA_ARGS__)
 #define DISPATCH(_1, _2, _3, _4, _5, _6, _7, _8, Px, ...) Px
 #define PRINT(...) CALL(DISPATCH(__VA_ARGS__, P1, P1, P1, P1, P1, P1, P1, P0),\
                                                         HEADLESS(__VA_ARGS__))
